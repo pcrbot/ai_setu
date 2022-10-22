@@ -1,4 +1,3 @@
-from pickle import NONE
 import re
 from os.path import dirname, join
 import difflib
@@ -34,7 +33,7 @@ async def get_magic_book_(msg):
     error_msg = ""
     error_msg,magic_msg_tag,magic_msg_ntag,magic_msg_scale = await mix_magic_(msg) #获取魔法书
     if error_msg != "":
-        return NONE,error_msg,NONE
+        return None,error_msg,None
     result_msg = magic_msg_tag +"&ntags="+ magic_msg_ntag +"&shape=Landscape"+"&scale=" + magic_msg_scale
     node_msg = f'正面tags:{magic_msg_tag}\n负面tags:{magic_msg_ntag}\nscale:{magic_msg_scale}'
     node_data ={
@@ -60,7 +59,7 @@ async def mix_magic_(msg):
             magic_msg_scale = magic_data[i]["scale"]
     if not magic_msg:
         error_msg = "发动魔法失败"
-        return error_msg,NONE,NONE,NONE
+        return error_msg,None,None,None
     magic_list = re.split(',',magic_msg)
     magic_list_pure = re.split(',',magic_msg_pure)
     for i in range(len(magic_list)-1,-1,-1):

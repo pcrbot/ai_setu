@@ -255,6 +255,7 @@ async def get_pic_d(msg):
 
 async def img_make(msglist,page = 1):
     num = len(msglist)
+    print(f"!!!!!!!!!!!!{num}")
     max_row = math.ceil(num/4)
     target = Image.new('RGB', (1920,512*max_row),(255,255,255))
     page = page - 1
@@ -263,7 +264,7 @@ async def img_make(msglist,page = 1):
         idlist.append(a)
         imglist.append(b)
         thumblist.append(c)
-    for index in range(0+(page*config['per_page_num'])),(config['per_page_num']+(page*config['per_page_num'])):
+    for index in range(0+(page*config['per_page_num']),(config['per_page_num']+(page*config['per_page_num']))):
         try:
             id = f"ID: {idlist[index]}" #图片ID
             thumb = f"点赞: {thumblist[index]}" #点赞数
@@ -321,37 +322,6 @@ async def save_pic(data):
         return pic_hash,pic_dir,error_msg
     return pic_hash,pic_dir,error_msg
 
-async def get_imgdata_magic(tags):#way=1时为get，way=0时为post
-    error_msg =""  #报错信息
-    result_msg = ""
-    i = 0
-    while i < len(ip_token_list):
-        await asyncio.sleep(1) #防止过快
-        i += 1
-        print(f"第{i}次查询")
-        api_ip,token = await retry_get_ip_token(i-1)
-        try:
-            url = (f"http://{api_ip}/got_image") + (f"?tags={tags}")+ (f"&token={token}")
-            response = await aiorequests.get(url, timeout=180)
-            imgdata = await response.content
-            if len(imgdata) < 5000:
-                error_msg = "token冷却中~"
-                continue
-        except Exception as e:
-            error_msg = f"超时了~"
-            continue
-        i=999
-        error_msg = ""
-    try:
-        img = Image.open(BytesIO(imgdata)).convert("RGB")
-        buffer = BytesIO()  # 创建缓存
-        img.save(buffer, format="png")
-        imgmes = 'base64://' + b64encode(buffer.getvalue()).decode()
-    except Exception as e:
-        error_msg += "处理图像失败{e}"
-        return result_msg,error_msg
-    result_msg = f"[CQ:image,file={imgmes}]"
-    return result_msg,error_msg
 
 async def img2anime_(message,msg):
     error_msg = ""
@@ -431,4 +401,37 @@ async def pic_super_(message,msg):
     result_msg = result_msg.split("base64,")[1]
     result_msg = 'base64://' + result_msg
     result_msg = f"[CQ:image,file={result_msg}]"
+    return result_msg,error_msg
+
+
+async def get_imgdata_magic(tags):#way=1时为get，way=0时为post
+    error_msg =""  #报错信息
+    result_msg = ""
+    i = 0
+    while i < len(ip_token_list):
+        await asyncio.sleep(1) #防止过快
+        i += 1
+        print(f"第{i}次查询")
+        api_ip,token = await retry_get_ip_token(i-1)
+        try:
+            url = (f"http://{api_ip}/got_image") + (f"?tags={tags}")+ (f"&token={token}")
+            response = await aiorequests.get(url, timeout=180)
+            imgdata = await response.content
+            if len(imgdata) < 5000:
+                error_msg = "token冷却中~"
+                continue
+        except Exception as e:
+            error_msg = f"超时了~"
+            continue
+        i=999
+        error_msg = ""
+    try:
+        img = Image.open(BytesIO(imgdata)).convert("RGB")
+        buffer = BytesIO()  # 创建缓存
+        img.save(buffer, format="png")
+        imgmes = 'base64://' + b64encode(buffer.getvalue()).decode()
+    except Exception as e:
+        error_msg += "处理图像失败{e}"
+        return result_msg,error_msg
+    result_msg = f"[CQ:image,file={imgmes}]"
     return result_msg,error_msg
