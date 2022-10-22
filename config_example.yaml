@@ -36,7 +36,7 @@ app_key: ""
 ##1. 是否开启违禁词过滤
 limit_word: True
 ##2. 违禁词表,字典树的方式,如 naked 会过滤掉 "nakedasdasda" 里的 "naked" 剩下 "dasdasda"
-wordlist: ['&r18=1', 'naked', 'vagina', 'penis', 'nsfw', 'genital', 'nude', 'nipple', 'vulva', 'no panties', 'clothes removed', 'rectum']
+wordlist: ['&r18=1', 'naked', 'vagina', 'penis', 'nsfw', 'genital', 'nude', 'nipple', 'vulva', 'no panties', 'clothes removed', 'rectum','%']
 
 
 
