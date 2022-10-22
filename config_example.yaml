@@ -1,0 +1,61 @@
+#配置文件,修改配置后重启Bot生效!!!
+#必填项!
+##1.api的IP,不了解就保持默认
+api_ip:
+  - '91.217.139.190:5010' #备用服务器
+  - '91.216.169.75:5010' #主服务器
+  - '185.80.202.180:5010' #备用服务器2
+##2.访问上述ip/token 获取
+token:
+  - ''
+##3. 如果没有指定tag的话，默认的tag
+tags_moren: "miku"
+##4. Denoising strength与原图的关联程度，越小关联越大
+strength: "0.60"
+##5. 绘图超时时间，单位秒
+draw_timeout: 180
+##6. 元素法典相似度,高于该值的魔咒会被覆盖
+max_ratio: 0.8
+
+#可选项!
+#整理tags功能
+arrange_tags: True
+#数据库相关功能
+##1. 是否开启数据录入
+add_db: True
+##2. 用于查看图片时，每页最多有多少张图
+per_page_num: 32
+#翻译功能
+##1. 是否开启翻译
+trans: True
+##2. 有道api地址,应用id,应用密钥
+youdao_url: "https://openapi.youdao.com/api"
+app_id: ""
+app_key: ""
+#过滤功能
+##1. 是否开启违禁词过滤
+limit_word: True
+##2. 违禁词表,字典树的方式,如 naked 会过滤掉 "nakedasdasda" 里的 "naked" 剩下 "dasdasda"
+wordlist: ['&r18=1', 'naked', 'vagina', 'penis', 'nsfw', 'genital', 'nude', 'nipple', 'vulva', 'no panties', 'clothes removed', 'rectum']
+
+
+
+#鉴赏图片功能
+img2tag: True #是否开启
+img2tags_url: "https://hf.space/embed/hysts/DeepDanbooru" #有排队功能的DeepDanbooru仓库,默认及格式: https://hf.space/embed/hysts/DeepDanbooru
+img2tags_url_timeout: 30 #请求超时时间
+
+#图片动漫化功能
+img2anime: True #是否开启
+img2anime_url: "https://hf.space/embed/hylee/White-box-Cartoonization" #有排队功能的White-box-Cartoonization仓库,默认及格式: https://hf.space/embed/hylee/White-box-Cartoonization
+img2anime_url_timeout: 120
+
+#超分图片功能
+picsuper: True #是否开启
+pic_super_url: "" #有排队功能的Real-CUGAN仓库,无默认.但格式与上面一致
+max_size: 1166400 #超分图片的最大尺寸为1080*1080,过大有风险
+pic_super_timeout: 120
+
+
+#PS 以超分图片为例
+#如果你是混乱邪恶阵营前往https://huggingface.co/spaces?search=real-cugan  ,然后点进去，然后复制SPACE的名称如saber2022/Real-CUGAN 这样的东西，注意需要仓库开启排队的功能，如果原有仓库无排队功能前往链接：https://pan.baidu.com/s/1BgD_WaBBkBn5Rrt9TNt0Zw?pwd=2333 获取文件然后上传至仓库
