@@ -25,7 +25,7 @@
 
 ### 额外依赖
 
-hjson,pyahocorasick
+hjson,pyahocorasick,pyyaml
 
 ### 使用方法
 
