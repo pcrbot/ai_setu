@@ -42,18 +42,18 @@ wordlist: ['&r18=1', 'naked', 'vagina', 'penis', 'nsfw', 'genital', 'nude', 'nip
 
 #鉴赏图片功能
 img2tag: True #是否开启
-img2tags_url: "https://hf.space/embed/hysts/DeepDanbooru" #有排队功能的DeepDanbooru仓库,默认及格式: https://hf.space/embed/hysts/DeepDanbooru
+img2tags_url: "https://hf.space/embed/hysts/DeepDanbooru" #有排队功能的DeepDanbooru仓库,默认及格式: https://hf.space/embed/hysts/DeepDanbooru 即https://hf.space/embed/{ID}/{仓库名}
 img2tags_url_timeout: 30 #请求超时时间
 
 #图片动漫化功能
-img2anime: True #是否开启
-img2anime_url: "https://hf.space/embed/hylee/White-box-Cartoonization" #有排队功能的White-box-Cartoonization仓库,默认及格式: https://hf.space/embed/hylee/White-box-Cartoonization
+img2anime: False #是否开启
+img2anime_url: "" #有排队功能的White-box-Cartoonization仓库,默认及格式: https://hf.space/embed/hylee/White-box-Cartoonization
 img2anime_url_timeout: 120
 
 #超分图片功能
-picsuper: True #是否开启
-pic_super_url: "" #有排队功能的Real-CUGAN仓库,无默认.但格式与上面一致
-max_size: 1166400 #超分图片的最大尺寸为1080*1080,过大有风险
+picsuper: False #是否开启
+pic_super_url: "" #有排队功能的Real-CUGAN仓库,无默认,格式: https://hf.space/embed/{XXXXX}/Real-CUGAN 或其它
+max_size: 11664000 #超分图片的最大尺寸为1080*1080,过大有风险
 pic_super_timeout: 120
 
 

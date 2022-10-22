@@ -3,7 +3,7 @@ import uuid
 import hashlib
 import time
 import yaml
-from os.path import dirname, join, exists
+from os.path import dirname, join
 
 curpath = dirname(__file__) #当前路径
 config_path = join(curpath,"config.yaml")

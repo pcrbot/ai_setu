@@ -43,14 +43,6 @@ for index, word in enumerate(config['wordlist']):
     actree.add_word(word, (index, word))
 actree.make_automaton() #初始化完成，一般来说重启才能重载屏蔽词
 
-with open(join(curpath, 'magic.json'),encoding="utf-8") as f: #初始化法典
-    magic_data = json.load(f)
-with open(join(curpath, 'magic_pure.json'),encoding="utf-8") as f: #初始化法典(纯净版)
-    magic_data_pure = json.load(f)
-magic_data_title = []
-for i in magic_data:
-    magic_data_title.append(i) #初始化法典目录
-
 
 
 async def guolv(sent):#过滤屏蔽词
@@ -64,19 +56,18 @@ async def guolv(sent):#过滤屏蔽词
 async def process_tags(gid,uid,tags,add_db=config['add_db'],trans=config['trans'],limit_word=config['limit_word'],arrange_tags=config['arrange_tags']):
     error_msg ="" #报错信息
     tags_guolv="" #过滤词信息
-    if not len(tags):
-        tags = config['tags_moren']
-        return tags,error_msg,tags_guolv
     #初始化
     try:
         tags = f"tags={tags.strip().lower()}" #去除首尾空格换行#转小写#头部加上tags=
         taglist = re.split('&',tags) #分割
-        id = ["tags=","ntags=","seed=","scale=","shape="]
+        id = ["tags=","ntags=","seed=","scale=","shape=","strength=","r18="]
         tag_dict = {x: "" for x in id} #初始化字典,结构为:tags+ntags+seed+scale+shape
         for i in id:
             tag_dict[i] = ("" if not [idx for idx in taglist if idx.startswith(i)] else [idx for idx in taglist if idx.startswith(i)][-1]).replace(i, '', 1) #取出tags+ntags+seed+scale+shape,每种只取列表最后一个,并删掉id
+        if not tag_dict["tags="]:
+            tag_dict["tags="] = config['tags_moren']
     except Exception as e:
-        error_msg += "tags初始化失败"
+        error_msg += f"tags初始化失败{e}"
         return tags,error_msg,tags_guolv
     #翻译tags
     if trans:
@@ -162,7 +153,10 @@ async def get_imgdata(tags,way=1,shape="Portrait",strength=config['strength'],b_
                 url = (f"http://{api_ip}/got_image") + (f"?tags={tags}")+ (f"&token={token}")
                 response = await aiorequests.get(url, timeout=180)
             else:
-                url = (f"http://{api_ip}/got_image2image") + (f"?tags={tags}") +(f"&shape={shape}")+(f"&strength={strength}")+(f"&token={token}")
+                if "&strength=" in tags:
+                    url = (f"http://{api_ip}/got_image2image") + (f"?tags={tags}")+(f"&shape={shape}") +(f"&token={token}")
+                else:
+                    url = (f"http://{api_ip}/got_image2image") + (f"?tags={tags}")+(f"&shape={shape}")+(f"&strength={strength}")+(f"&token={token}")
                 response = await aiorequests.post(url,data=b64encode(b_io.getvalue()), timeout=180)
             imgdata = await response.content
             if len(imgdata) < 5000:
@@ -358,63 +352,6 @@ async def get_imgdata_magic(tags):#way=1时为get，way=0时为post
         return result_msg,error_msg
     result_msg = f"[CQ:image,file={imgmes}]"
     return result_msg,error_msg
-
-
-async def get_magic_book_(msg):
-    error_msg = ""
-    result_msg = ""
-    magic_msg_ntag = ""
-    node_data = {}
-    error_msg,magic_msg_tag,magic_msg_ntag,magic_msg_scale = await mix_magic_(msg) #获取魔法书
-    if error_msg != "":
-        return result_msg,error_msg,node_data
-    result_msg = magic_msg_tag +"&ntags="+ magic_msg_ntag +"&shape=Landscape"+"&scale=" + magic_msg_scale
-    node_msg = f'正面tags:{magic_msg_tag}\n负面tags:{magic_msg_ntag}\nscale:{magic_msg_scale}'
-    node_data ={
-        "type": "node",
-        "data": {
-            "name": '图书管理员小冰',
-            "uin": '2854196306',
-            "content": node_msg
-        }
-        }
-    return result_msg,error_msg,node_data
-
-async def mix_magic_(msg):
-    error_msg = ""
-    magic_msg_tag = ""
-    magic_list = []
-    magic_msg = ""
-    magic_msg_pure = ""
-    magic_msg_ntag = ""
-    magic_msg_scale = ""
-    magic_id_list = re.split('\\s+',msg)
-    for i in magic_id_list:
-        if i in magic_data_title:
-            magic_msg += f'{magic_data[i]["tags"]},'
-            magic_msg_pure += f'{magic_data_pure[i]["tags"]},'
-            magic_msg_ntag = magic_data[i]["ntags"]
-            magic_msg_scale = magic_data[i]["scale"]
-    if not magic_msg:
-        error_msg = "发动魔法失败"
-        return error_msg,magic_msg_tag,magic_msg_ntag,magic_msg_scale
-    magic_list = re.split(',',magic_msg)
-    magic_list_pure = re.split(',',magic_msg_pure)
-    for i in range(len(magic_list)-1,-1,-1):
-        j=i-1
-        if i == 0:
-            break
-        for j in range(j,-1,-1):
-            seq=  difflib.SequenceMatcher(lambda x: x ==" ",magic_list_pure[i],magic_list_pure[j])
-            if seq.ratio()> config['max_ratio']: #相似度大于0.8则删除
-                magic_list[j] = ""
-                magic_list_pure[j] = ""
-    while "" in magic_list:
-        magic_list.remove("")
-    magic_msg_tag = ",".join(magic_list)
-    return error_msg,magic_msg_tag,magic_msg_ntag,magic_msg_scale
-    #融合魔法以最后融合的魔法作为基准!!!
-
 
 async def img2anime_(message,msg):
     error_msg = ""
