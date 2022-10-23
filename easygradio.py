@@ -21,7 +21,8 @@ async def quene_fetch_(url,_hash,max_try):
             continue
         elif resj['status'] == 'COMPLETE':
             error_msg = ""
-            result_msg = resj['data']['data'][0]
+            #print(resj['data']['data'])
+            result_msg = resj['data']['data'] #获取结果 resj['data']['data']
             return result_msg,error_msg
         else:
             error_msg = f"状态码:{resj['status']} 失败原因:{resj['data']}"
@@ -45,6 +46,7 @@ async def quene_push_(url,json_data,max_try=60):
     max_try= max_try
     result_msg,error_msg = await quene_fetch_(url,_hash,max_try) #获取结果 resj['data']['data'][0]
     return result_msg,error_msg
+
 
 async def predict_push(url,json_data,max_try=60):
     result_msg = ""

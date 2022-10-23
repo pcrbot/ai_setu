@@ -338,7 +338,8 @@ async def img2anime_(message,msg):
     json_data = ["data:image/jpeg;base64," + base64.b64encode(b_io.getvalue()).decode()]
     result_msg,error_msg = await easygradio.quene_push_(config['img2anime_url'],json_data,max_try=config['img2anime_url_timeout'])
     if error_msg != "":
-        return result_msg,error_msg
+        return None,error_msg
+    result_msg = result_msg[0]
     result_img = base64.b64decode(''.join(result_msg.split(',')[1:]))
     result_img = Image.open(BytesIO(result_img)).convert("RGB")
     buffer = BytesIO()  # 创建缓存
@@ -359,9 +360,10 @@ async def img2tags_(message,msg):
     json_data = ["data:image/jpeg;base64," + base64.b64encode(b_io.getvalue()).decode(),0.7]
     result_msg,error_msg = await easygradio.quene_push_(config['img2tags_url'],json_data,max_try=config['img2tags_url_timeout'])
     if error_msg != "":
-        return result_msg,error_msg
-    result_msg = result_msg['confidences']
-    result_msg = ','.join([f'{i["label"]}' for i in result_msg]).replace("rating:safe,","")
+        return None,error_msg
+    result_msg = result_msg[1]
+    #result_msg = result_msg['confidences']
+    #result_msg = ','.join([f'{i["label"]}' for i in result_msg]).replace("rating:safe,","")
     result_msg = f"\n鉴赏出的tags有:{result_msg}"
     return result_msg,error_msg
 
@@ -400,7 +402,8 @@ async def pic_super_(message,msg):
     json_data = ["data:image/jpeg;base64," + base64.b64encode(b_io.getvalue()).decode(),modelname,2]
     result_msg,error_msg = await easygradio.quene_push_(config['pic_super_url'],json_data,max_try=config['pic_super_timeout'])
     if error_msg != "":
-        return result_msg,error_msg
+        return None,error_msg
+    result_msg = result_msg[0]
     result_msg = result_msg.split("base64,")[1]
     result_msg = 'base64://' + result_msg
     result_msg = f"[CQ:image,file={result_msg}]"

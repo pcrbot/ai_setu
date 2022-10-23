@@ -31,6 +31,7 @@ sv = Service(
 async def cwbangzhu(bot, ev):
     await bot.send_group_forward_msg(group_id=ev['group_id'], messages=help.help_msg_all)
 
+
 @sv.on_prefix('绘图')
 async def text2img(bot, ev):
     #await bot.send(ev, f"收到指令,处理中~", at_sender=True) #触发回馈示例,喜欢就取消注释
