@@ -89,7 +89,7 @@ async def process_tags(gid,uid,tags,add_db=config['add_db'],trans=config['trans'
     if limit_word:
         try:
             #过滤tags,只过滤正面tags
-            tags2guolv = tag_dict["tags="]
+            tags2guolv = tag_dict["tags="].strip().lower()
             tags2guolv,tags_guolv = await guolv(tags2guolv)#过滤
             tag_dict["tags="] = tags2guolv
         except Exception as e:
@@ -119,6 +119,10 @@ async def process_tags(gid,uid,tags,add_db=config['add_db'],trans=config['trans'
         except Exception as e:
             error_msg += "上传失败"
             return tags,error_msg,tags_guolv
+    #处理ntags
+    if not tag_dict["ntags="]:
+        tag_dict["ntags="] = config['ntags_moren']
+    tag_dict["ntags="] = config['ntags_safe'] + "," + tag_dict["ntags="]
     #整合tags
     tags = tag_dict["tags="] if tag_dict["tags="] else config['tags_moren']
     for i in id:
@@ -175,9 +179,9 @@ async def get_imgdata(tags,way=1,shape="Portrait",strength=config['strength'],b_
         error_msg = f"获取图片信息失败"
         return result_msg,error_msg
     try:
-        img = Image.open(BytesIO(imgdata)).convert("RGB")
+        img = Image.open(BytesIO(imgdata))
         buffer = BytesIO()  # 创建缓存
-        img.save(buffer, format="png")
+        img.save(buffer, format="PNG")
         imgmes = 'base64://' + b64encode(buffer.getvalue()).decode()
     except Exception as e:
         error_msg += "处理图像失败{e}"
@@ -255,7 +259,6 @@ async def get_pic_d(msg):
 
 async def img_make(msglist,page = 1):
     num = len(msglist)
-    print(f"!!!!!!!!!!!!{num}")
     max_row = math.ceil(num/4)
     target = Image.new('RGB', (1920,512*max_row),(255,255,255))
     page = page - 1
@@ -282,7 +285,7 @@ async def img_make(msglist,page = 1):
         draw.text((80*column+384*(column-1)+int(region.width/2)-90,80+100*(row-1)+384*(row-1)+region.height),id,font=font,fill = (0, 0, 0))
         draw.text((80*column+384*(column-1)+int(region.width/2)+20,80+100*(row-1)+384*(row-1)+region.height),thumb,font=font,fill = (0, 0, 0))
     result_buffer = BytesIO()
-    target.save(result_buffer, format='JPEG', quality=100) #质量影响图片大小
+    target.save(result_buffer, format='JPEG', quality=90) #质量影响图片大小
     imgmes = 'base64://' + base64.b64encode(result_buffer.getvalue()).decode()
     result_msg = f"[CQ:image,file={imgmes}]"
     return result_msg
