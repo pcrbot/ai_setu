@@ -48,7 +48,7 @@ wordlist: ['&r18=1', 'nake', 'vagina', 'penis', 'nsfw', 'genital', 'nude', 'nipp
 
 #鉴赏图片功能
 img2tag: True #是否开启
-img2tags_url: "https://hf.space/embed/hysts/DeepDanbooru" #有排队功能的DeepDanbooru仓库,默认及格式: https://hf.space/embed/hysts/DeepDanbooru 即https://hf.space/embed/{ID}/{仓库名}
+img2tags_url: "https://hf.space/embed/NoCrypt/DeepDanbooru_string" #有排队功能的DeepDanbooru仓库,默认及格式: https://hf.space/embed/hysts/DeepDanbooru(用这个得改一改) 即https://hf.space/embed/{ID}/{仓库名}
 img2tags_url_timeout: 30 #请求超时时间
 
 #图片动漫化功能
