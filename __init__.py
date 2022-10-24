@@ -10,8 +10,6 @@ sv_help = '''
 【以图绘图 XXX 图片】
 【本群/个人XP排行】
 【本群/个人XP缝合】
-【绘图参数指南】
-【元素法典指南】
 【上传pic】务必携带seed/scale/tags等参数
 【查看本群pic】
 【点赞pic xxx】
