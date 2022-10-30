@@ -47,7 +47,7 @@ async def say_sorry(bot, ev):
     name = data1['card'] if len(data1['card']) != 0 else data1['nickname']
     msg = format_msg(sid, name)
     await bot.send(ev, msg)'''
-async def be_girl(uid,name):
+async def be_girl(uid):
     tags = ""
     goal_tag = {}
     uid = int(uid)
@@ -59,7 +59,7 @@ async def be_girl(uid,name):
         goal_tag[i] = random.choice(tag_list)
     for i in goal_tag:
         tags += "," + tag_data[i][goal_tag[i]]
-    msg = f'二次元少女{name},头发是{goal_tag["发色"]}{goal_tag["头发"]},胸部{goal_tag["胸"]},穿着{goal_tag["衣服"]},{goal_tag["鞋子"]},{goal_tag["装饰"]},萌点是{goal_tag["二次元"]},身份是{goal_tag["身份"]}{goal_tag["类型"]}'
+    msg = f'头发是{goal_tag["发色"]}{goal_tag["头发"]},胸部{goal_tag["胸"]},穿着{goal_tag["衣服"]},{goal_tag["鞋子"]},{goal_tag["装饰"]},萌点是{goal_tag["二次元"]},身份是{goal_tag["身份"]}{goal_tag["类型"]}'
     return msg,tags
 
 @sv.on_fullmatch(('今天我要变成少女!','今天我是什么少女'))
@@ -67,12 +67,13 @@ async def say_sorry_me(bot, ev):
     uid = ev.user_id
     gid = ev.group_id
     name = ev.sender['nickname']
-    msg,tags = await be_girl(uid,name)
+    msg,tags = await be_girl(uid)
     tags,error_msg,tags_guolv=await until.process_tags(gid,uid,msg) #tags处理过程
     if error_msg:
         await bot.finish(ev, error_msg)
     result_msg,error_msg = await until.get_imgdata_magic(tags) #图片处理过程
     if error_msg:
         await bot.finish(ev, error_msg)
+    msg = f"二次元少女{name},{msg}"
     msg = msg+ result_msg
     await bot.send(ev, msg)
