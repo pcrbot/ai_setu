@@ -1,3 +1,4 @@
+from pickle import NONE
 import re
 from os.path import dirname, join
 import difflib
@@ -11,8 +12,8 @@ except:
 curpath = dirname(__file__) #当前路径
 
 config_path = join(curpath,"config.yaml")
-f = open(config_path, 'r', encoding='utf-8')
-config = yaml.safe_load(f)#读取配置文件
+with open(config_path,encoding="utf-8") as f: #初始化法典
+    config = yaml.safe_load(f)#读取配置文件
 
 with open(join(curpath, './magicbooks/magic.json'),encoding="utf-8") as f: #初始化法典
     magic_data = json.load(f)
@@ -33,7 +34,7 @@ async def get_magic_book_(msg):
     error_msg = ""
     error_msg,magic_msg_tag,magic_msg_ntag,magic_msg_scale = await mix_magic_(msg) #获取魔法书
     if error_msg != "":
-        return None,error_msg,None
+        return NONE,error_msg,NONE
     result_msg = magic_msg_tag +"&ntags="+ magic_msg_ntag +"&shape=Landscape"+"&scale=" + magic_msg_scale
     node_msg = f'正面tags:{magic_msg_tag}\n负面tags:{magic_msg_ntag}\nscale:{magic_msg_scale}'
     node_data ={
@@ -59,7 +60,7 @@ async def mix_magic_(msg):
             magic_msg_scale = magic_data[i]["scale"]
     if not magic_msg:
         error_msg = "发动魔法失败"
-        return error_msg,None,None,None
+        return error_msg,NONE,NONE,NONE
     magic_list = re.split(',',magic_msg)
     magic_list_pure = re.split(',',magic_msg_pure)
     for i in range(len(magic_list)-1,-1,-1):

@@ -10,6 +10,8 @@ sv_help = '''
 【以图绘图 XXX 图片】
 【本群/个人XP排行】
 【本群/个人XP缝合】
+【绘图参数指南】
+【元素法典指南】
 【上传pic】务必携带seed/scale/tags等参数
 【查看本群pic】
 【点赞pic xxx】
@@ -181,6 +183,9 @@ async def del_img(bot, ev):
 @sv.on_prefix("元素法典")
 async def magic_book(bot, ev):
     msg = ev.message.extract_plain_text().strip()
+    if msg == "目录":
+        msg =f"元素法典目录:\n{str(magic.magic_data_title)}"
+        await bot.finish(ev, msg, at_sender=True)
     tags,error_msg,node_data = await magic.get_magic_book_(msg)
     if len(error_msg):
         await bot.finish(ev, f"{error_msg}", at_sender=True)
@@ -213,6 +218,32 @@ async def get_pic_super(bot, ev):
     if len(error_msg):
         await bot.finish(ev, f"已报错：{error_msg}", at_sender=True)
     await bot.send(ev, result_msg, at_sender=True)
+
+#获取Bot的群信息
+async def self_member_info(bot, ev, gid):
+    info = await bot.get_login_info()
+    self_id = info["user_id"]
+    try:
+        gm_info = await bot.get_group_member_info(
+            group_id = gid,
+            user_id = self_id,
+            no_cache = True
+        )
+        return gm_info
+    except Exception as e:
+        hoshino.logger.exception(e)
+
+
+@sv.on_keyword('撤回')
+async def get_msg_recall(bot, ev):
+    if ev.message[0].type == "reply":
+        self_info = await self_member_info(bot, ev, ev.group_id)
+        if self_info['role'] != 'owner' and self_info['role'] != 'admin':
+            await bot.finish(ev, '\n不给我管理员？', at_sender=True)
+        await bot.delete_msg(message_id=int(ev.message[0].data['id']))
+        await bot.delete_msg(message_id=int(ev.message_id))
+    else:
+        await bot.finish(ev, "请回复要撤回的消息", at_sender=True)
 
 @sv.on_keyword("动漫化")
 async def img2anime(bot, ev):

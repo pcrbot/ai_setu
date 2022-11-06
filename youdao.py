@@ -7,8 +7,8 @@ from os.path import dirname, join
 
 curpath = dirname(__file__) #当前路径
 config_path = join(curpath,"config.yaml")
-f = open(config_path, 'r', encoding='utf-8')
-config = yaml.safe_load(f)#读取配置文件
+with open(config_path,encoding="utf-8") as f: #初始化法典
+    config = yaml.safe_load(f)#读取配置文件
 
 
 youdao_url = config['youdao_url']

@@ -1,20 +1,16 @@
 from base64 import b64encode
 from io import BytesIO
-import re,json
+import re
 from heapq import nsmallest
-from hoshino import Service, priv, aiorequests
+from hoshino import aiorequests
 from PIL import Image, ImageDraw,ImageFont
-from io import BytesIO
 import base64
 import time,calendar
-import re
 import os
 import math
 from os.path import dirname, join, exists
 from . import youdao,db,easygradio
 import ahocorasick
-import uuid
-import difflib
 import asyncio
 import yaml
 try:
@@ -31,8 +27,8 @@ if not exists(save_image_path):
     os.mkdir(save_image_path) #创建img保存目录
 
 
-f = open(config_path, 'r', encoding='utf-8')
-config = yaml.safe_load(f)#读取配置文件
+with open(config_path,encoding="utf-8") as f: #初始化配置文件
+    config = yaml.safe_load(f)#读取配置文件
 
 
 ip_token_list = [(i, j) for i in config['api_ip'] for j in config['token'] if i != j] #初始化ip和token的列表(轮询池)
@@ -336,7 +332,7 @@ async def img2anime_(message,msg):
     if error_msg != "":
         return result_msg,error_msg
     json_data = ["data:image/jpeg;base64," + base64.b64encode(b_io.getvalue()).decode()]
-    result_msg,error_msg = await easygradio.quene_push_(config['img2anime_url'],json_data,max_try=config['img2anime_url_timeout'])
+    result_msg,error_msg = await easygradio.predict_push_(config['img2anime_url'],json_data,max_try=config['img2anime_url_timeout'])
     if error_msg != "":
         return None,error_msg
     result_msg = result_msg[0]
@@ -358,7 +354,7 @@ async def img2tags_(message,msg):
     if error_msg != "":
         return result_msg,error_msg
     json_data = ["data:image/jpeg;base64," + base64.b64encode(b_io.getvalue()).decode(),0.7]
-    result_msg,error_msg = await easygradio.quene_push_(config['img2tags_url'],json_data,max_try=config['img2tags_url_timeout'])
+    result_msg,error_msg = await easygradio.predict_push_(config['img2tags_url'],json_data,max_try=config['img2tags_url_timeout'])
     if error_msg != "":
         return None,error_msg
     result_msg = result_msg[1]
@@ -400,7 +396,7 @@ async def pic_super_(message,msg):
         error_msg += "超分参数错误"
         return result_msg,error_msg
     json_data = ["data:image/jpeg;base64," + base64.b64encode(b_io.getvalue()).decode(),modelname,2]
-    result_msg,error_msg = await easygradio.quene_push_(config['pic_super_url'],json_data,max_try=config['pic_super_timeout'])
+    result_msg,error_msg = await easygradio.predict_push_(config['pic_super_url'],json_data,max_try=config['pic_super_timeout'])
     if error_msg != "":
         return None,error_msg
     result_msg = result_msg[0]

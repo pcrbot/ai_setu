@@ -48,16 +48,24 @@ async def quene_push_(url,json_data,max_try=60):
     return result_msg,error_msg
 
 
-async def predict_push(url,json_data,max_try=60):
+async def predict_push_(url,json_data,max_try=60):
     result_msg = ""
     error_msg = ""
-    url_predict = f'{url}/api/predict'
+    url_predict = f'{url}/api/predict/'
     json = {
+        "session_hash": str(uuid.uuid1()),
         "data": json_data,
+        "fn_index": 0
     }
+    await asyncio.sleep(1)#等待1秒
     try:
         resj = await (await aiorequests.post(url_predict, json=json,timeout = max_try)).json()
-        result_msg = resj['data'][0]
     except Exception as e:
-        error_msg = f"尝试推理 失败原因:{e}"
+        error_msg = f"请求失败 失败原因:{e}"
+    try:
+        result_msg = resj['data']
+    except Exception as e:
+        error_msg = f"请求失败 失败原因:{e},获取内容{resj}"
     return result_msg,error_msg
+
+
