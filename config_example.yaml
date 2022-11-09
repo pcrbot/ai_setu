@@ -34,10 +34,15 @@ per_page_num: 32
 #翻译功能
 ##1. 是否开启翻译
 trans: True
-##2. 有道api地址,应用id,应用密钥
+##2. 翻译方式(0为有道,1为百度),api地址,应用id,应用密钥
+way2trans: 0
 youdao_url: "https://openapi.youdao.com/api"
-app_id: ""
-app_key: ""
+youdao_app_id: ""
+youdao_app_key: ""
+
+baidu_url: "http://api.fanyi.baidu.com/api/trans/vip/translate"
+baidu_app_id: ""
+baidu_app_key: ""
 #过滤功能
 ##1. 是否开启违禁词过滤
 limit_word: True

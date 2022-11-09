@@ -46,7 +46,7 @@ async def text2img(bot, ev):
     result_msg,error_msg = await until.get_imgdata(tags)
     if len(error_msg):
         await bot.finish(ev, f"已报错：{error_msg}", at_sender=True)
-    #result_msg = f"[CQ:reply,id={ev.message_id}]{result_msg}"     #回复形式发送
+    #result_msg = f"[CQ:reply,id={ev.message_id}]{result_msg}"     #回复形式发送,喜欢就取消注释,并注释下一行
     await bot.send(ev, result_msg, at_sender=True)
 
 @sv.on_keyword("以图绘图")

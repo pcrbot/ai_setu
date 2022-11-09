@@ -9,7 +9,7 @@ import time,calendar
 import os
 import math
 from os.path import dirname, join, exists
-from . import youdao,db,easygradio
+from . import translate,db,easygradio
 import ahocorasick
 import asyncio
 import yaml
@@ -46,7 +46,7 @@ async def guolv(sent):#过滤屏蔽词
     tags_guolv = ""
     for i in actree.iter(sent):
         sent_cp = sent_cp.replace(i[1][1], "")
-        tags_guolv += str(i[1][1]) + " "
+        tags_guolv = tags_guolv.join(f"{str(i[1][1])} ")
     return sent_cp,tags_guolv
 
 async def process_tags(gid,uid,tags,add_db=config['add_db'],trans=config['trans'],limit_word=config['limit_word'],arrange_tags=config['arrange_tags']):
@@ -54,47 +54,40 @@ async def process_tags(gid,uid,tags,add_db=config['add_db'],trans=config['trans'
     tags_guolv="" #过滤词信息
     #初始化
     try:
-        tags = f"tags={tags.strip().lower()}" #去除首尾空格换行#转小写#头部加上tags=
+        tags = f"tags={tags.strip().lower()}" #去除首尾空格换行#转小写#头部加上tags= #转小写方便处理
         taglist = re.split('&',tags) #分割
         id = ["tags=","ntags=","seed=","scale=","shape=","strength=","r18="]
-        tag_dict = {x: "" for x in id} #初始化字典,结构为:tags+ntags+seed+scale+shape
-        for i in id:
-            tag_dict[i] = ("" if not [idx for idx in taglist if idx.startswith(i)] else [idx for idx in taglist if idx.startswith(i)][-1]).replace(i, '', 1) #取出tags+ntags+seed+scale+shape,每种只取列表最后一个,并删掉id
+        tag_dict = {i: ("" if not [idx for idx in taglist if idx.startswith(i)] else [idx for idx in taglist if idx.startswith(i)][-1]).replace(i, '', 1)  for i in id }#取出tags+ntags+seed+scale+shape,每种只取列表最后一个,并删掉id
         if not tag_dict["tags="]:
-            tag_dict["tags="] = config['tags_moren']
+            tag_dict["tags="] = config['tags_moren']#如果tags为空，就用默认tags
     except Exception as e:
-        error_msg += f"tags初始化失败{e}"
+        error_msg = error_msg.join(f"tags初始化失败{e}")
         return tags,error_msg,tags_guolv
     #翻译tags
     if trans:
         try:
             if tag_dict["ntags="]:
-                tags2trans = tag_dict["tags="]+"&"+tag_dict["ntags="] # &作为分隔符
-                tags2trans = await youdao.tag_trans(tags2trans) #翻译
+                tags2trans = f'{tag_dict["tags="]}&{tag_dict["ntags="]}' # &作为分隔符,为了整个拿去翻译
+                tags2trans = await translate.tag_trans(tags2trans) #翻译
                 taglist1 = re.split('&',tags2trans)
                 tag_dict["tags="] = taglist1[0]
                 tag_dict["ntags="] = taglist1[1]
             else:
-                tags2trans = tag_dict["tags="]
-                tags2trans = await youdao.tag_trans(tags2trans) #翻译
-                tag_dict["tags="] = tags2trans
+                tag_dict["tags="] = await translate.tag_trans(tag_dict["tags="])#翻译
         except Exception as e:
-            error_msg += "翻译失败"
+            error_msg = error_msg.join("翻译失败")
             return tags,error_msg,tags_guolv
-    #过滤tags
+    #过滤tags,只过滤正面tags
     if limit_word:
         try:
-            #过滤tags,只过滤正面tags
-            tags2guolv = tag_dict["tags="].strip().lower()
-            tags2guolv,tags_guolv = await guolv(tags2guolv)#过滤
-            tag_dict["tags="] = tags2guolv
+            tag_dict["tags="],tags_guolv = await guolv(tag_dict["tags="].strip().lower())#过滤,转小写防止有道翻译出来大写
         except Exception as e:
-            error_msg += "过滤失败"
+            error_msg = error_msg.join("过滤失败")
             return tags,error_msg,tags_guolv
     #整理tags
     if arrange_tags:
         try:
-            #整理tags,只整理正面tags
+            #整理tags,去除空元素,去除逗号影响
             id2tidy = ["tags=","ntags="]
             for i in id2tidy:
                 tidylist = re.split(',|，',tag_dict[i])
@@ -102,20 +95,20 @@ async def process_tags(gid,uid,tags,add_db=config['add_db'],trans=config['trans'
                     tidylist.remove("")
                 tag_dict[i] = ",".join(tidylist)
         except Exception as e:
-            error_msg += f"整理失败{e}"
+            error_msg = error_msg.join(f"整理失败{e}")
             return tags,error_msg,tags_guolv
     #上传XP数据库
     if add_db:
         try:
-            #上传XP数据库
+            #上传XP数据库,只上传正面tags
             tags2XP = tag_dict["tags="]
             taglist3 = re.split(',',tags2XP)
             for tag in taglist3:
                 db.add_xp_num(gid,uid,tag)
         except Exception as e:
-            error_msg += "上传失败"
+            error_msg = error_msg.join("上传失败")
             return tags,error_msg,tags_guolv
-    #处理ntags
+    #处理ntags,增加安全ntags,增加默认ntags
     if not tag_dict["ntags="]:
         tag_dict["ntags="] = config['ntags_moren']
     tag_dict["ntags="] = config['ntags_safe'] + "," + tag_dict["ntags="]
@@ -123,10 +116,11 @@ async def process_tags(gid,uid,tags,add_db=config['add_db'],trans=config['trans'
     tags = tag_dict["tags="] if tag_dict["tags="] else config['tags_moren']
     for i in id:
         if i != "tags=" and tag_dict[i]:
-            tags += "&"+i+tag_dict[i]
+            tags += f"&{i}{tag_dict[i]}"
     tags = tags.replace("landscape", "Landscape")
     tags = tags.replace("portrait", "Portrait")
     tags = tags.replace("square", "Square")
+
     return tags,error_msg,tags_guolv
 
 async def retry_get_ip_token(i):
@@ -134,7 +128,8 @@ async def retry_get_ip_token(i):
         api_ip,token = ip_token_list[i]
     return api_ip,token
 
-
+#pic本地保存
+#pic_id
 
 
 
@@ -180,7 +175,7 @@ async def get_imgdata(tags,way=1,shape="Portrait",strength=config['strength'],b_
         img.save(buffer, format="PNG")
         imgmes = 'base64://' + b64encode(buffer.getvalue()).decode()
     except Exception as e:
-        error_msg += "处理图像失败{e}"
+        error_msg = error_msg.join("处理图像失败{e}")
         return result_msg,error_msg
     result_msg = f"[CQ:image,file={imgmes}]{msg}\ntags:{tags}"
     return result_msg,error_msg
@@ -199,7 +194,7 @@ async def get_xp_list_(msg,gid,uid):
     if len(xp_list)>0:
         for xpinfo in xp_list:
             keyword, num = xpinfo
-            result_msg += f'关键词：{keyword}||次数：{num}\n'
+            result_msg = result_msg.join(f'关键词：{keyword}||次数：{num}\n')
     else:
         result_msg = f'暂无{msg}的XP信息'
     return result_msg,error_msg
@@ -393,7 +388,7 @@ async def pic_super_(message,msg):
             con = "no-denoise"
         modelname = f"up{scale}x-latest-{con}.pth"
     except Exception as e:
-        error_msg += "超分参数错误"
+        error_msg = error_msg.join("超分参数错误")
         return result_msg,error_msg
     json_data = ["data:image/jpeg;base64," + base64.b64encode(b_io.getvalue()).decode(),modelname,2]
     result_msg,error_msg = await easygradio.predict_push_(config['pic_super_url'],json_data,max_try=config['pic_super_timeout'])
@@ -433,7 +428,7 @@ async def get_imgdata_magic(tags):#way=1时为get，way=0时为post
         img.save(buffer, format="png")
         imgmes = 'base64://' + b64encode(buffer.getvalue()).decode()
     except Exception as e:
-        error_msg += "处理图像失败{e}"
+        error_msg = error_msg.join("处理图像失败{e}")
         return result_msg,error_msg
     result_msg = f"[CQ:image,file={imgmes}]"
     return result_msg,error_msg
