@@ -219,32 +219,6 @@ async def get_pic_super(bot, ev):
         await bot.finish(ev, f"已报错：{error_msg}", at_sender=True)
     await bot.send(ev, result_msg, at_sender=True)
 
-#获取Bot的群信息
-async def self_member_info(bot, ev, gid):
-    info = await bot.get_login_info()
-    self_id = info["user_id"]
-    try:
-        gm_info = await bot.get_group_member_info(
-            group_id = gid,
-            user_id = self_id,
-            no_cache = True
-        )
-        return gm_info
-    except Exception as e:
-        hoshino.logger.exception(e)
-
-
-@sv.on_keyword('撤回')
-async def get_msg_recall(bot, ev):
-    if ev.message[0].type == "reply":
-        self_info = await self_member_info(bot, ev, ev.group_id)
-        if self_info['role'] != 'owner' and self_info['role'] != 'admin':
-            await bot.finish(ev, '\n不给我管理员？', at_sender=True)
-        await bot.delete_msg(message_id=int(ev.message[0].data['id']))
-        await bot.delete_msg(message_id=int(ev.message_id))
-    else:
-        await bot.finish(ev, "请回复要撤回的消息", at_sender=True)
-
 @sv.on_keyword("动漫化")
 async def img2anime(bot, ev):
     msg = ev.message.extract_plain_text()
