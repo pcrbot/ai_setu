@@ -269,8 +269,10 @@ async def get_pic_d(msg):
         a,b = image.size
         c = a/b
         s = [0.6667,1.5,1]
-        a = 64 * math.ceil(a / 64)
-        b = 64 * math.ceil(b / 64)
+        n = 1000000 #最大像素
+        if a*b > n:
+            b = math.ceil(n/a/64)*64
+            a = math.ceil(n/b/64)*64 #等比缩放为64的倍数
         size = (a,b)
         s1 =["Portrait","Landscape","Square"]
         shape=s1[s.index(nsmallest(1, s, key=lambda x: abs(x-c))[0])]#判断形状

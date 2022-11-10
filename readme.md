@@ -1,6 +1,7 @@
-
 # AI_SETU
 
+> 2022/11/10 21:00 更新内容:以图绘图改为使用stable diffusion UI的api
+>
 > 2022/10/24 20:   00 更新内容：合并今日少女插件(deemo)
 >
 > 2022/10/22 23:   40 更新内容：添加help.py,拆分文件
@@ -19,8 +20,6 @@
 >
 > 2022/10/11 21：47 更新内容：pic的上传，查看，点赞
 
-
-
 ### **介绍**
 
 利用路路佬的API，实现HoshinoBot快速进行AI绘图。
@@ -34,14 +33,13 @@ hjson,pyahocorasick,pyyaml
 ### 使用方法
 
 - 装额外依赖
-
 - 命令行输入
 
   ```
   cp config_example.yaml config.yaml
   ```
 
-  然后自行修改`config.yaml` 
+  然后自行修改 `config.yaml`
 
 ### 功能
 
@@ -56,4 +54,3 @@ hjson,pyahocorasick,pyyaml
 * **动漫化**
 * **元素法典吟唱**
 * **今天我是什么少女**
-
