@@ -97,7 +97,7 @@ async def process_tags(gid,uid,tags,add_db=config['add_db'],trans=config['trans'
             return tags,error_msg,tags_guolv
     #规范tags
     if not tag_dict["tags="]:
-        tag_dict["ntags="] = config['ntags_moren']#默认正面tags
+        tag_dict["tags="] = config['tags_moren']#默认正面tags
     if not tag_dict["ntags="]:
         tag_dict["ntags="] = config['ntags_moren']#默认负面tags
     if not tag_dict["scale="]:
