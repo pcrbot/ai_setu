@@ -58,21 +58,19 @@ async def process_tags(gid,uid,tags,add_db=config['add_db'],trans=config['trans'
         taglist = re.split('&',tags) #分割
         id = ["tags=","ntags=","seed=","scale=","shape=","strength=","r18="]
         tag_dict = {i: ("" if not [idx for idx in taglist if idx.startswith(i)] else [idx for idx in taglist if idx.startswith(i)][-1]).replace(i, '', 1)  for i in id }#取出tags+ntags+seed+scale+shape,每种只取列表最后一个,并删掉id
-        if not tag_dict["tags="]:
-            tag_dict["tags="] = config['tags_moren']#如果tags为空，就用默认tags
     except Exception as e:
         error_msg = error_msg.join(f"tags初始化失败{e}")
         return tags,error_msg,tags_guolv
     #翻译tags
     if trans:
         try:
-            if tag_dict["ntags="]:
+            if tag_dict["tags="] and tag_dict["ntags="]:
                 tags2trans = f'{tag_dict["tags="]}&{tag_dict["ntags="]}' # &作为分隔符,为了整个拿去翻译
                 tags2trans = await translate.tag_trans(tags2trans) #翻译
                 taglist1 = re.split('&',tags2trans)
                 tag_dict["tags="] = taglist1[0]
                 tag_dict["ntags="] = taglist1[1]
-            else:
+            elif tag_dict["tags="]:
                 tag_dict["tags="] = await translate.tag_trans(tag_dict["tags="])#翻译
         except Exception as e:
             error_msg = error_msg.join("翻译失败")
@@ -80,7 +78,7 @@ async def process_tags(gid,uid,tags,add_db=config['add_db'],trans=config['trans'
     #过滤tags,只过滤正面tags
     if limit_word:
         try:
-            tag_dict["tags="],tags_guolv = await guolv(tag_dict["tags="].strip().lower())#过滤,转小写防止有道翻译出来大写
+            tag_dict["tags="],tags_guolv = await guolv(tag_dict["tags="].strip().lower())#过滤,转小写防止翻译出来大写
         except Exception as e:
             error_msg = error_msg.join("过滤失败")
             return tags,error_msg,tags_guolv
@@ -97,6 +95,19 @@ async def process_tags(gid,uid,tags,add_db=config['add_db'],trans=config['trans'
         except Exception as e:
             error_msg = error_msg.join(f"整理失败{e}")
             return tags,error_msg,tags_guolv
+    #规范tags
+    if not tag_dict["tags="]:
+        tag_dict["ntags="] = config['ntags_moren']#默认正面tags
+    if not tag_dict["ntags="]:
+        tag_dict["ntags="] = config['ntags_moren']#默认负面tags
+    if not tag_dict["scale="]:
+        tag_dict["scale="] = config['scale_moren']#默认scale
+    if tag_dict["shape="] and tag_dict["shape="].capitalize() in ["Portrait","Landscape","Square"]:
+        tag_dict["shape="] = tag_dict["shape="].capitalize()
+    else:
+        tag_dict["shape="] = config['shape_moren']#默认形状
+    if not tag_dict["r18="]:
+        tag_dict["r18="] = config['r18_moren']#默认r18参数
     #上传XP数据库
     if add_db:
         try:
@@ -108,20 +119,7 @@ async def process_tags(gid,uid,tags,add_db=config['add_db'],trans=config['trans'
         except Exception as e:
             error_msg = error_msg.join("上传失败")
             return tags,error_msg,tags_guolv
-    #处理ntags,增加安全ntags,增加默认ntags
-    if not tag_dict["ntags="]:
-        tag_dict["ntags="] = config['ntags_moren']
-    tag_dict["ntags="] = config['ntags_safe'] + "," + tag_dict["ntags="]
-    #整合tags
-    tags = tag_dict["tags="] if tag_dict["tags="] else config['tags_moren']
-    for i in id:
-        if i != "tags=" and tag_dict[i]:
-            tags += f"&{i}{tag_dict[i]}"
-    tags = tags.replace("landscape", "Landscape")
-    tags = tags.replace("portrait", "Portrait")
-    tags = tags.replace("square", "Square")
-
-    return tags,error_msg,tags_guolv
+    return tag_dict,error_msg,tags_guolv
 
 async def retry_get_ip_token(i):
     if i < len(ip_token_list):
@@ -132,11 +130,50 @@ async def retry_get_ip_token(i):
 #pic_id
 
 
-
-
-async def get_imgdata(tags,way=1,shape="Portrait",strength=config['strength'],b_io=None):#way=1时为get，way=0时为post
+async def get_imgdata_sd(tagdict:dict,way=1,shape="Portrait",b_io=None,size = None):
     error_msg =""  #报错信息
     result_msg = ""
+    url = config["sd_api_ip"]
+    data = ["data:image/jpeg;base64," + base64.b64encode(b_io.getvalue()).decode()]
+    width,height = size
+    if not tagdict["strength="]:
+        tagdict["strength="] = config['strength_moren']#默认噪声
+    json_data = {
+        "init_images": data,
+        "resize_mode": 0,
+        "denoising_strength": tagdict["strength="],
+        "prompt": tagdict["tags="],
+        "seed": -1,
+        "steps": 50,
+        "cfg_scale": tagdict["scale="],
+        "width": width,
+        "height": height,
+        "negative_prompt": tagdict["ntags="],
+        "sampler_index": "Euler"
+    }
+    response = await aiorequests.post(url,json=json_data,headers = {"Content-Type": "application/json"})
+    imgdata = await response.json()
+    imgdata = imgdata["images"][0]
+    try:
+        imgmes = 'base64://' + imgdata
+    except Exception as e:
+        error_msg = error_msg.join("处理图像失败{e}")
+        return result_msg,error_msg
+    result_msg = f"[CQ:image,file={imgmes}]\ntags:{tagdict['tags=']}"
+    return result_msg,error_msg
+
+
+async def get_imgdata(tagdict:dict,way=1,shape="Portrait",b_io=None):#way=1时为get，way=0时为post
+    error_msg =""  #报错信息
+    result_msg = ""
+    if not way and not tagdict["strength="]:
+        tagdict["strength="] = config['strength_moren']#默认噪声
+    #合并tags
+    tags = tagdict["tags="]
+    id = ["tags=","ntags=","seed=","scale=","shape=","strength=","r18="]
+    for i in id:
+        if i != "tags=" and tagdict[i]:
+            tags += f"&{i}{tagdict[i]}"
     i = 0
     while i < len(ip_token_list):
         await asyncio.sleep(1) #防止过快
@@ -148,10 +185,8 @@ async def get_imgdata(tags,way=1,shape="Portrait",strength=config['strength'],b_
                 url = (f"http://{api_ip}/got_image") + (f"?tags={tags}")+ (f"&token={token}")
                 response = await aiorequests.get(url, timeout=180)
             else:
-                if "&strength=" in tags:
-                    url = (f"http://{api_ip}/got_image2image") + (f"?tags={tags}")+(f"&shape={shape}") +(f"&token={token}")
-                else:
-                    url = (f"http://{api_ip}/got_image2image") + (f"?tags={tags}")+(f"&shape={shape}")+(f"&strength={strength}")+(f"&token={token}")
+                url = (f"http://{api_ip}/got_image2image") + (f"?tags={tags}")+(f"&token={token}")
+
                 response = await aiorequests.post(url,data=b64encode(b_io.getvalue()), timeout=180)
             imgdata = await response.content
             if len(imgdata) < 5000:
@@ -179,6 +214,7 @@ async def get_imgdata(tags,way=1,shape="Portrait",strength=config['strength'],b_
         return result_msg,error_msg
     result_msg = f"[CQ:image,file={imgmes}]{msg}\ntags:{tags}"
     return result_msg,error_msg
+
 
 async def get_xp_list_(msg,gid,uid):
     error_msg =""  #报错信息
@@ -221,22 +257,21 @@ async def get_xp_pic_(msg,gid,uid):
 
 async def get_pic_d(msg):
     error_msg = ""  # 报错信息
-    b_io = ""
-    shape = "Portrait"
-    size = 0
     try:
         image_url = re.search(r"\[CQ:image,file=(.*)url=(.*?)[,|\]]", str(msg))
         url = image_url.group(2)
     except Exception as e:
         error_msg = "你的图片呢？"
-        return b_io,shape,error_msg,size
+        return None,None,error_msg,None
     try:
         img_data = await aiorequests.get(url)
         image = Image.open(BytesIO(await img_data.content))
         a,b = image.size
-        size = a*b
         c = a/b
         s = [0.6667,1.5,1]
+        a = 64 * math.ceil(a / 64)
+        b = 64 * math.ceil(b / 64)
+        size = (a,b)
         s1 =["Portrait","Landscape","Square"]
         shape=s1[s.index(nsmallest(1, s, key=lambda x: abs(x-c))[0])]#判断形状
         image = image.convert("RGB")
@@ -361,14 +396,14 @@ async def img2tags_(message,msg):
 async def pic_super_(message,msg):
     error_msg = ""
     result_msg = ""
-    size = 0
     if not config['picsuper']:
         error_msg = "未开启图片超分"
         return result_msg,error_msg
     b_io,shape,error_msg,size = await get_pic_d(message)
+    a,b = size
     if error_msg != "":
         return result_msg,error_msg
-    if size > config['max_size']:
+    if a*b > config['max_size']:
         error_msg = "图片这么大，进不去拉~"
         return result_msg,error_msg
     try:
@@ -399,6 +434,8 @@ async def pic_super_(message,msg):
     result_msg = 'base64://' + result_msg
     result_msg = f"[CQ:image,file={result_msg}]"
     return result_msg,error_msg
+
+
 
 
 async def get_imgdata_magic(tags):#way=1时为get，way=0时为post

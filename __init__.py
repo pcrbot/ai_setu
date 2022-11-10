@@ -38,12 +38,12 @@ async def text2img(bot, ev):
     gid = ev.group_id
     uid = ev.user_id
     tags = ev.message.extract_plain_text().strip()
-    tags,error_msg,tags_guolv=await until.process_tags(gid,uid,tags) #tags处理过程
+    tag_dict,error_msg,tags_guolv=await until.process_tags(gid,uid,tags) #tags处理过程
     if len(error_msg):
         await bot.send(ev, f"已报错：{error_msg}", at_sender=True)
     if len(tags_guolv):
         await bot.send(ev, f"已过滤：{tags_guolv}", at_sender=True)
-    result_msg,error_msg = await until.get_imgdata(tags)
+    result_msg,error_msg = await until.get_imgdata(tag_dict)
     if len(error_msg):
         await bot.finish(ev, f"已报错：{error_msg}", at_sender=True)
     #result_msg = f"[CQ:reply,id={ev.message_id}]{result_msg}"     #回复形式发送,喜欢就取消注释,并注释下一行
@@ -60,12 +60,12 @@ async def img2img(bot, ev):
     b_io,shape,error_msg,size = await until.get_pic_d(ev.message)  #图片获取过程
     if len(error_msg):
         await bot.finish(ev, f"已报错：{error_msg}", at_sender=True)
-    tags,error_msg,tags_guolv=await until.process_tags(gid,uid,tags) #tags处理过程
+    tag_dict,error_msg,tags_guolv=await until.process_tags(gid,uid,tags) #tags处理过程
     if len(error_msg):
         await bot.send(ev, f"已报错：{error_msg}", at_sender=True)
     if len(tags_guolv):
         await bot.send(ev, f"已过滤：{tags_guolv}", at_sender=True)
-    result_msg,error_msg = await until.get_imgdata(tags,way=0,shape=shape,b_io=b_io) #绘图过程
+    result_msg,error_msg = await until.get_imgdata_sd(tag_dict,way=0,shape=shape,b_io=b_io,size=size) #绘图过程
     if len(error_msg):
         await bot.finish(ev, f"已报错：{error_msg}", at_sender=True)
     await bot.send(ev, result_msg, at_sender=True)
@@ -88,12 +88,12 @@ async def get_xp_pic(bot, ev):
     tags,error_msg = await until.get_xp_pic_(msg,gid,uid)
     if len(error_msg):
         await bot.finish(ev, f"已报错：{error_msg}", at_sender=True)
-    tags,error_msg,tags_guolv=await until.process_tags(gid,uid,tags,add_db=0,arrange_tags=0) #tags处理过程
+    tag_dict,error_msg,tags_guolv=await until.process_tags(gid,uid,tags,add_db=0,arrange_tags=0) #tags处理过程
     if len(error_msg):
         await bot.send(ev, f"已报错：{error_msg}", at_sender=True)
     if len(tags_guolv):
         await bot.send(ev, f"已过滤：{tags_guolv}", at_sender=True)
-    result_msg,error_msg = await until.get_imgdata(tags)
+    result_msg,error_msg = await until.get_imgdata(tag_dict)
     await bot.send(ev, result_msg, at_sender=True)
 
 
@@ -150,12 +150,12 @@ async def quick_img(bot, ev):
     (a,b) = msg
     msg = re.sub("&seed=[0-9]\d*", "", b, count=0, flags=0)
     tags +=f",{msg}"
-    tags,error_msg,tags_guolv=await until.process_tags(gid,uid,tags) #tags处理过程
+    tag_dict,error_msg,tags_guolv=await until.process_tags(gid,uid,tags) #tags处理过程
     if len(error_msg):
         await bot.send(ev, f"已报错：{error_msg}", at_sender=True)
     if len(tags_guolv):
         await bot.send(ev, f"已过滤：{tags_guolv}", at_sender=True)
-    result_msg,error_msg = await until.get_imgdata(tags)
+    result_msg,error_msg = await until.get_imgdata(tag_dict)
     if len(error_msg):
         await bot.finish(ev, f"已报错：{error_msg}", at_sender=True)
     await bot.send(ev, result_msg, at_sender=True)

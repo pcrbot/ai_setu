@@ -5,22 +5,23 @@ api_ip:
   - '91.217.139.190:5010' #备用服务器
   - '91.216.169.75:5010' #主服务器
   - '185.80.202.180:5010' #备用服务器2
+
+sd_api_ip: "http://{ip}/sdapi/v1/img2img" #sdui的api地址,用来以图绘图
 ##2.访问上述ip/token 获取
 token:
   - ''
 
-##3. 如果没有指定tag的话，默认的tag
+##3. 默认绘图参数
 tags_moren: "miku" #默认的tags
-
 ntags_moren: "lowres, badanatomy, bad hands, text, error, missing fingers, extradigit, fewerdigits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark,username,blurry" #默认的负面tags
-
-ntags_safe: "nsfw, nude" #默认的防止出漏点图的ntags,有就必定会添加,如果不想出现r18务必添加,反之清空
-
-##4. Denoising strength与原图的关联程度，越小关联越大
-strength: "0.60"
-##5. 绘图超时时间，单位秒
+ntags_safe: "nsfw, nude" #默认的防止漏点的ntags,清空则无效
+scale_moren: 11 #默认的scale
+shape_moren: "Portrait" #形状参数
+strength_moren: "0.60" #以图绘图原图关联,越低越关联
+r18_moren: 0 #默认是否开启r18,1为开启
+##4. 绘图超时时间，单位秒
 draw_timeout: 180
-##6. 元素法典相似度,高于该值的魔咒会被覆盖
+##5. 元素法典相似度,高于该值的魔咒会被覆盖
 max_ratio: 0.8
 
 #可选项!
