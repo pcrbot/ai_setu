@@ -13,6 +13,8 @@ from . import translate,db,easygradio
 import ahocorasick
 import asyncio
 import yaml
+import aiofiles
+import uuid
 try:
     import hjson as json
 except:
@@ -25,6 +27,10 @@ font_path = join(curpath,"weiheijun.ttf")  #字体文件路径
 config_path = join(curpath,"config.yaml")
 if not exists(save_image_path):
     os.mkdir(save_image_path) #创建img保存目录
+
+temp_image_path= join(curpath,'TempImage')  # 保存临时图片路径
+if not exists(temp_image_path):
+    os.mkdir(temp_image_path) #创建临时img保存目录
 
 
 with open(config_path,encoding="utf-8") as f: #初始化配置文件
@@ -56,7 +62,7 @@ async def process_tags(gid,uid,tags,add_db=config['add_db'],trans=config['trans'
     try:
         tags = f"tags={tags.strip().lower()}" #去除首尾空格换行#转小写#头部加上tags= #转小写方便处理
         taglist = re.split('&',tags) #分割
-        id = ["tags=","ntags=","seed=","scale=","shape=","strength=","r18="]
+        id = ["tags=","ntags=","seed=","scale=","shape=","strength=","r18=","steps=","sampler=","restore_faces=","tiling="]
         tag_dict = {i: ("" if not [idx for idx in taglist if idx.startswith(i)] else [idx for idx in taglist if idx.startswith(i)][-1]).replace(i, '', 1)  for i in id }#取出tags+ntags+seed+scale+shape,每种只取列表最后一个,并删掉id
     except Exception as e:
         error_msg = error_msg.join(f"tags初始化失败{e}")
@@ -100,6 +106,8 @@ async def process_tags(gid,uid,tags,add_db=config['add_db'],trans=config['trans'
         tag_dict["tags="] = config['tags_moren']#默认正面tags
     if not tag_dict["ntags="]:
         tag_dict["ntags="] = config['ntags_moren']#默认负面tags
+    if not config["ntags_safe"]:
+        tag_dict["ntags="] = config["ntags_safe"].join(f",{tag_dict['ntags=']}")#默认安全负面tags
     if not tag_dict["scale="]:
         tag_dict["scale="] = config['scale_moren']#默认scale
     if tag_dict["shape="] and tag_dict["shape="].capitalize() in ["Portrait","Landscape","Square"]:
@@ -108,6 +116,14 @@ async def process_tags(gid,uid,tags,add_db=config['add_db'],trans=config['trans'
         tag_dict["shape="] = config['shape_moren']#默认形状
     if not tag_dict["r18="]:
         tag_dict["r18="] = config['r18_moren']#默认r18参数
+    if not tag_dict["steps="]:
+        tag_dict["steps="] = "30"#默认steps
+    if not tag_dict["sampler="]:
+        tag_dict["sampler="] = "Euler a"#默认sampler
+    if not tag_dict["restore_faces="] and tag_dict["restore_faces="] !=  "True":
+        tag_dict["restore_faces="] = False#默认restore_faces
+    if not tag_dict["tiling="] and tag_dict["tiling="] !=  "True":
+        tag_dict["tiling="] = False#默认tiling
     #上传XP数据库
     if add_db:
         try:
@@ -127,7 +143,28 @@ async def retry_get_ip_token(i):
     return api_ip,token
 
 #pic本地保存
-#pic_id
+#pid
+async def pic_save_temp(imagedata):
+    pid = str(uuid.uuid4())
+    async with aiofiles.open(f"{temp_image_path}/{pid}.png", 'wb') as f:
+        await f.write(imagedata)
+    return pid
+
+async def get_pic_msg_temp(msg):
+    pid = re.search(r"pid:+([a-z0-9-]{36})",str(msg))[1]
+    try:
+        img = Image.open(f"{temp_image_path}/{pid}.png")
+    except:
+        return f"找不到这个图片涅~"
+    parameters = re.search(r"(.+)\nNegative prompt: +(.+)\nSteps: +(.+), Sampler: +(.+), CFG scale: +(.+), Seed: +(.+), Size: +(.+), Model hash: +(.{8})",img.info["parameters"])
+    msg = f'''
+    ▲prompt: {parameters[1]}
+    ▼Negative prompt: {parameters[2]}
+    Steps:{parameters[3]}  Sampler:{parameters[4]}
+    CFG scale:{parameters[5]}  seed:{parameters[6]}
+    Size:{parameters[7]}  Model hash:{parameters[8]}'''
+    return msg
+
 
 
 async def get_imgdata_sd(tagdict:dict,way=1,shape="Portrait",b_io=None,size = None):
@@ -138,28 +175,36 @@ async def get_imgdata_sd(tagdict:dict,way=1,shape="Portrait",b_io=None,size = No
     width,height = size
     if not tagdict["strength="]:
         tagdict["strength="] = config['strength_moren']#默认噪声
+    if not tagdict["seed="]:
+        tagdict["seed="] = -1
     json_data = {
         "init_images": data,
         "resize_mode": 0,
         "denoising_strength": tagdict["strength="],
         "prompt": tagdict["tags="],
-        "seed": -1,
-        "steps": 50,
+        "seed": tagdict["seed="],
+        "steps": tagdict["steps="],
         "cfg_scale": tagdict["scale="],
         "width": width,
         "height": height,
+        "restore_faces": tagdict["restore_faces="],
+        "tiling": tagdict["tiling="],
         "negative_prompt": tagdict["ntags="],
-        "sampler_index": "Euler"
+        "sampler_index": tagdict["sampler="]
     }
     response = await aiorequests.post(url,json=json_data,headers = {"Content-Type": "application/json"})
     imgdata = await response.json()
     imgdata = imgdata["images"][0]
+    try :
+        pid = await pic_save_temp(base64.b64decode(imgdata))
+    except Exception as e:
+        print(f"!!!保存失败{e}")
     try:
         imgmes = 'base64://' + imgdata
     except Exception as e:
         error_msg = error_msg.join("处理图像失败{e}")
         return result_msg,error_msg
-    result_msg = f"[CQ:image,file={imgmes}]\ntags:{tagdict['tags=']}"
+    result_msg = f"[CQ:image,file={imgmes}]\npid:{pid}"
     return result_msg,error_msg
 
 
@@ -186,7 +231,6 @@ async def get_imgdata(tagdict:dict,way=1,shape="Portrait",b_io=None):#way=1时�
                 response = await aiorequests.get(url, timeout=180)
             else:
                 url = (f"http://{api_ip}/got_image2image") + (f"?tags={tags}")+(f"&token={token}")
-
                 response = await aiorequests.post(url,data=b64encode(b_io.getvalue()), timeout=180)
             imgdata = await response.content
             if len(imgdata) < 5000:
@@ -204,6 +248,10 @@ async def get_imgdata(tagdict:dict,way=1,shape="Portrait",b_io=None):#way=1时�
     except Exception as e:
         error_msg = f"获取图片信息失败"
         return result_msg,error_msg
+    try :
+        pid = await pic_save_temp(imgdata)
+    except Exception as e:
+        print(f"!!!保存失败{e}")
     try:
         img = Image.open(BytesIO(imgdata))
         buffer = BytesIO()  # 创建缓存
@@ -212,7 +260,7 @@ async def get_imgdata(tagdict:dict,way=1,shape="Portrait",b_io=None):#way=1时�
     except Exception as e:
         error_msg = error_msg.join("处理图像失败{e}")
         return result_msg,error_msg
-    result_msg = f"[CQ:image,file={imgmes}]{msg}\ntags:{tags}"
+    result_msg = f"[CQ:image,file={imgmes}]{msg}\npid:{pid}"
     return result_msg,error_msg
 
 
@@ -267,7 +315,6 @@ async def get_pic_d(msg):
         img_data = await aiorequests.get(url)
         image = Image.open(BytesIO(await img_data.content))
         a,b = image.size
-        print(f"原尺寸{a}x{b}!!!!!!!!!!!!!")
         c = a/b
         s = [0.6667,1.5,1]
         n = 1000000 #最大像素
@@ -276,7 +323,6 @@ async def get_pic_d(msg):
             a = math.ceil(c*b)
         a = math.ceil(a/64)*64
         b = math.ceil(b/64)*64 #等比缩放为64的倍数
-        print(f"新尺寸{a}x{b}!!!!!!!!!!!!!")
         size = (a,b)
         s1 =["Portrait","Landscape","Square"]
         shape=s1[s.index(nsmallest(1, s, key=lambda x: abs(x-c))[0])]#判断形状
@@ -465,6 +511,10 @@ async def get_imgdata_magic(tags):#way=1时为get，way=0时为post
             continue
         i=999
         error_msg = ""
+    try :
+        pid = await pic_save_temp(imgdata)
+    except Exception as e:
+        print(f"!!!保存失败{e}")
     try:
         img = Image.open(BytesIO(imgdata)).convert("RGB")
         buffer = BytesIO()  # 创建缓存
@@ -473,5 +523,5 @@ async def get_imgdata_magic(tags):#way=1时为get，way=0时为post
     except Exception as e:
         error_msg = error_msg.join("处理图像失败{e}")
         return result_msg,error_msg
-    result_msg = f"[CQ:image,file={imgmes}]"
+    result_msg = f"[CQ:image,file={imgmes}]\npid:{pid}"
     return result_msg,error_msg

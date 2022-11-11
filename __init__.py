@@ -70,6 +70,20 @@ async def img2img(bot, ev):
         await bot.finish(ev, f"已报错：{error_msg}", at_sender=True)
     await bot.send(ev, result_msg, at_sender=True)
 
+
+@sv.on_keyword("解析pic")
+async def get_pic_msg(bot, ev):
+    if ev.message[0].type == "reply":
+        tmsg = await bot.get_msg(message_id=int(ev.message[0].data['id']))
+        ev.message = tmsg["message"]
+    msg = await until.get_pic_msg_temp(ev.message)
+    await bot.send(ev, msg, at_sender=True)
+
+
+
+
+
+
 @sv.on_suffix('XP排行')
 async def get_xp_list(bot, ev):
     msg = ev.message.extract_plain_text()
@@ -124,7 +138,7 @@ async def upload_header(bot, ev):
         await bot.send(ev, f"报错:{e}",at_sender=True)
 
 
-@sv.on_rex((r'^查看(.*)pic+( ([0-9]\d*))?'))
+@sv.on_rex((r'^查看(.+)pic+( ([0-9]\d*))?'))
 async def check_pic(bot, ev):
     gid = ev.group_id
     uid = ev.user_id
@@ -180,6 +194,25 @@ async def del_img(bot, ev):
     msg = db.del_pic(id)
     await bot.send(ev, msg, at_sender=True)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 @sv.on_prefix("元素法典")
 async def magic_book(bot, ev):
     msg = ev.message.extract_plain_text().strip()
@@ -193,7 +226,25 @@ async def magic_book(bot, ev):
     if len(error_msg):
         await bot.finish(ev, f"已报错：{error_msg}", at_sender=True)
     await bot.send(ev, result_msg, at_sender=True)
-    await bot.send_group_forward_msg(group_id=ev['group_id'], messages=node_data)#发送tags,用转发消息
+    #await bot.send_group_forward_msg(group_id=ev['group_id'], messages=node_data)#发送tags,用转发消息
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
