@@ -267,6 +267,7 @@ async def get_pic_d(msg):
         img_data = await aiorequests.get(url)
         image = Image.open(BytesIO(await img_data.content))
         a,b = image.size
+        print(f"原尺寸{a}x{b}!!!!!!!!!!!!!")
         c = a/b
         s = [0.6667,1.5,1]
         n = 1000000 #最大像素
@@ -275,6 +276,7 @@ async def get_pic_d(msg):
             a = math.ceil(c*b)
         a = math.ceil(a/64)*64
         b = math.ceil(b/64)*64 #等比缩放为64的倍数
+        print(f"新尺寸{a}x{b}!!!!!!!!!!!!!")
         size = (a,b)
         s1 =["Portrait","Landscape","Square"]
         shape=s1[s.index(nsmallest(1, s, key=lambda x: abs(x-c))[0])]#判断形状
