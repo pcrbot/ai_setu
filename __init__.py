@@ -34,7 +34,7 @@ async def text2img(bot, ev):
         await bot.send(ev, f"已报错：{error_msg}", at_sender=True)
     if len(tags_guolv):
         await bot.send(ev, f"已过滤：{tags_guolv}", at_sender=True)
-    result_msg,error_msg = await until.get_imgdata(tag_dict)
+    result_msg,error_msg = await until.get_imgdata(tag_dict,way=0)
     if len(error_msg):
         await bot.finish(ev, f"已报错：{error_msg}", at_sender=True)
     #result_msg = f"[CQ:reply,id={ev.message_id}]{result_msg}"     #回复形式发送,喜欢就取消注释,并注释下一行
@@ -56,7 +56,7 @@ async def img2img(bot, ev):
         await bot.send(ev, f"已报错：{error_msg}", at_sender=True)
     if len(tags_guolv):
         await bot.send(ev, f"已过滤：{tags_guolv}", at_sender=True)
-    result_msg,error_msg = await until.get_imgdata_sd(tag_dict,way=0,shape=shape,b_io=b_io,size=size) #绘图过程
+    result_msg,error_msg = await until.get_imgdata_sd(tag_dict,way=1,shape=shape,b_io=b_io,size=size) #绘图过程
     if len(error_msg):
         await bot.finish(ev, f"已报错：{error_msg}", at_sender=True)
     await bot.send(ev, result_msg, at_sender=True)

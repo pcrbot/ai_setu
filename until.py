@@ -173,42 +173,77 @@ async def get_pic_msg_temp(msg):
         img = Image.open(f"{temp_image_path}/{pid}.png")
     except:
         return f"找不到这个图片涅~"
-    parameters = re.search(r"(.+)\nNegative prompt: +(.+)\nSteps: +(.+), Sampler: +(.+), CFG scale: +(.+), Seed: +(.+), Size: +(.+), Model hash: +(.{8})",img.info["parameters"])
-    msg = f'''
-    ▲prompt: {parameters[1]}
-    ▼Negative prompt: {parameters[2]}
-    Steps:{parameters[3]}  Sampler:{parameters[4]}
-    CFG scale:{parameters[5]}  seed:{parameters[6]}
-    Size:{parameters[7]}  Model hash:{parameters[8]}'''
+    try:
+        msg = img.info["parameters"]
+        parameters = re.search(r"(.+)\nNegative prompt: +(.+)\nSteps: +(.+), Sampler: +(.+), CFG scale: +(.+), Seed: +(.+), Size: +(.+), Model hash: +(.{8})",msg)
+        msg = f'''
+        ▲prompt: {parameters[1]}
+        ▼Negative prompt: {parameters[2]}
+        Steps:{parameters[3]}  Sampler:{parameters[4]}
+        CFG scale:{parameters[5]}  seed:{parameters[6]}
+        Size:{parameters[7]}  Model hash:{parameters[8]}
+        FROM STABLE DIFFUSION WEBUI'''
+    except:
+        a,b= img.info["Description"],eval(img.info["Comment"])
+        msg = f'''
+        ▲prompt: {a}
+        ▼Negative prompt: {b["uc"]}
+        Steps:{b["steps"]}  Sampler:{b["sampler"]}
+        CFG scale:{b["scale"]}  seed:{b["seed"]}
+        FROM NOVELAI'''
     return msg
 
 
-
+#way=0是txt2img,way=1是img2img
 async def get_imgdata_sd(tagdict:dict,way=1,shape="Portrait",b_io=None,size = None):
     error_msg =""  #报错信息
     result_msg = ""
-    url = config["sd_api_ip"]
-    data = ["data:image/jpeg;base64," + base64.b64encode(b_io.getvalue()).decode()]
-    width,height = size
-    if not tagdict["strength="]:
-        tagdict["strength="] = config['strength_moren']#默认噪声
     if not tagdict["seed="]:
         tagdict["seed="] = -1
-    json_data = {
-        "init_images": data,
-        "resize_mode": 0,
-        "denoising_strength": tagdict["strength="],
-        "prompt": tagdict["tags="],
-        "seed": tagdict["seed="],
-        "steps": tagdict["steps="],
-        "cfg_scale": tagdict["scale="],
-        "width": width,
-        "height": height,
-        "restore_faces": tagdict["restore_faces="],
-        "tiling": tagdict["tiling="],
-        "negative_prompt": tagdict["ntags="],
-        "sampler_index": tagdict["sampler="]
-    }
+    if not way:
+        shape = tagdict["shape="]
+        if shape == "Portrait":
+            width,height = 512,768
+        elif shape == "Landscape":
+            width,height = 768,512
+        elif shape == "Square":
+            width,height = 640,640
+        url = f"{config['sd_api_ip']}/sdapi/v1/txt2img"
+        json_data = {
+          "enable_hr": False,
+          "prompt": tagdict["tags="],
+          "seed": tagdict["seed="],
+          "steps": tagdict["steps="],
+          "cfg_scale": tagdict["scale="],
+          "width": width,
+          "height": height,
+          "restore_faces": tagdict["restore_faces="],
+          "tiling": tagdict["tiling="],
+          "negative_prompt": tagdict["ntags="],
+          "sampler_index": tagdict["sampler="]
+        }
+
+    if way :
+        url = f"{config['sd_api_ip']}/sdapi/v1/img2img"
+        data = ["data:image/jpeg;base64," + base64.b64encode(b_io.getvalue()).decode()]
+        width,height = size
+        if not tagdict["strength="]:
+            tagdict["strength="] = config['strength_moren']#默认噪声
+        json_data = {
+            "init_images": data,
+            "resize_mode": 0,
+            "denoising_strength": tagdict["strength="],
+            "prompt": tagdict["tags="],
+            "seed": tagdict["seed="],
+            "steps": tagdict["steps="],
+            "cfg_scale": tagdict["scale="],
+            "width": width,
+            "height": height,
+            "restore_faces": tagdict["restore_faces="],
+            "tiling": tagdict["tiling="],
+            "negative_prompt": tagdict["ntags="],
+            "sampler_index": tagdict["sampler="]
+        }
     response = await aiorequests.post(url,json=json_data,headers = {"Content-Type": "application/json"})
     imgdata = await response.json()
     imgdata = imgdata["images"][0]
@@ -225,7 +260,7 @@ async def get_imgdata_sd(tagdict:dict,way=1,shape="Portrait",b_io=None,size = No
     return result_msg,error_msg
 
 
-async def get_imgdata(tagdict:dict,way=1,shape="Portrait",b_io=None):#way=1时为get，way=0时为post
+async def get_imgdata(tagdict:dict,way=1,shape="Portrait",b_io=None):#way=0时为get，way=1时为post
     error_msg =""  #报错信息
     result_msg = ""
     if not way and not tagdict["strength="]:
@@ -243,7 +278,7 @@ async def get_imgdata(tagdict:dict,way=1,shape="Portrait",b_io=None):#way=1时�
         print(f"第{i}次查询")
         api_ip,token = await retry_get_ip_token(i-1)
         try:
-            if way:
+            if not way:
                 url = (f"http://{api_ip}/got_image") + (f"?tags={tags}")+ (f"&token={token}")
                 response = await aiorequests.get(url, timeout=180)
             else:
