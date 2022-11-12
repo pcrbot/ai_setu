@@ -5,7 +5,7 @@ content1 = '''
 【本群/个人XP排行】
 【本群/个人XP缝合】
 【上传pic】务必携带seed/scale/tags等参数
-【查看本群pic】
+【查看pic 本群/个人/全部 页码】
 【点赞pic xxx】
 '''.strip()
 

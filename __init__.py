@@ -1,20 +1,11 @@
 # 2022.10.14 18:07
 import re
 from hoshino import Service, priv
-from . import db,until,help,magic
+from . import db,until,help
 
 
 sv_help = '''
-主要功能：
-【绘图 XXX】
-【以图绘图 XXX 图片】
-【本群/个人XP排行】
-【本群/个人XP缝合】
-【绘图参数指南】
-【元素法典指南】
-【上传pic】务必携带seed/scale/tags等参数
-【查看本群pic】
-【点赞pic xxx】
+[帮助 绘图]查看帮助
 '''.strip()
 
 sv = Service(
@@ -138,17 +129,12 @@ async def upload_header(bot, ev):
         await bot.send(ev, f"报错:{e}",at_sender=True)
 
 
-@sv.on_rex((r'^查看(.+)pic+( ([0-9]\d*))?'))
+@sv.on_prefix(('查看pic'))
 async def check_pic(bot, ev):
     gid = ev.group_id
     uid = ev.user_id
-    match = ev['match']
-    msg = match.group(1)
-    try:
-        page = int(match.group(2).lstrip())
-    except:
-        page = 1
-    result_msg,error_msg = await until.check_pic_(gid,uid,msg,page)
+    msg = ev.message.extract_plain_text()
+    result_msg,error_msg = await until.check_pic_(gid,uid,msg)
     if len(error_msg):
         await bot.finish(ev, f"已报错：{error_msg}", at_sender=True)
     await bot.send(ev, result_msg, at_sender=True)
@@ -219,14 +205,13 @@ async def magic_book(bot, ev):
     if msg == "目录":
         msg =f"元素法典目录:\n{str(magic.magic_data_title)}"
         await bot.finish(ev, msg, at_sender=True)
-    tags,error_msg,node_data = await magic.get_magic_book_(msg)
+    tag_dict,error_msg = await until.get_magic_book_(msg)
     if len(error_msg):
         await bot.finish(ev, f"{error_msg}", at_sender=True)
-    result_msg,error_msg = await until.get_imgdata_magic(tags)
+    result_msg,error_msg = await until.get_imgdata(tag_dict)
     if len(error_msg):
         await bot.finish(ev, f"已报错：{error_msg}", at_sender=True)
     await bot.send(ev, result_msg, at_sender=True)
-    #await bot.send_group_forward_msg(group_id=ev['group_id'], messages=node_data)#发送tags,用转发消息
 
 
 

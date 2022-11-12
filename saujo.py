@@ -23,7 +23,7 @@ sv = Service(
     )
 
 curpath = dirname(__file__) #当前路径
-tag_path = join(curpath,"tag_data.json")
+tag_path = join(curpath,"magicbooks/tag_data.json")
 with open((tag_path),encoding="utf-8") as f: #初始化tags
     tag_data = json.load(f)
 tags_id = ["优秀实践","风格","头发","发色","衣服","鞋子","装饰","胸","类型","身份","表情","二次元","基础动作","手动作","腿动作","复合动作","露出","场景","物品","天气","环境"]

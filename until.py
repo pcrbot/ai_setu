@@ -15,6 +15,8 @@ import asyncio
 import yaml
 import aiofiles
 import uuid
+import difflib
+import random
 try:
     import hjson as json
 except:
@@ -35,6 +37,21 @@ if not exists(temp_image_path):
 
 with open(config_path,encoding="utf-8") as f: #初始化配置文件
     config = yaml.safe_load(f)#读取配置文件
+
+
+with open(join(curpath, './magicbooks/magic.json'),encoding="utf-8") as f: #初始化法典
+    magic_data = json.load(f)
+with open(join(curpath, './magicbooks/magic_pure.json'),encoding="utf-8") as f: #初始化法典(纯净版)
+    magic_data_pure = json.load(f)
+magic_data_title = []
+for i in magic_data:
+    magic_data_title.append(i) #初始化法典目录
+
+with open(join(curpath, './magicbooks/magic_dark.json'),encoding="utf-8") as f: #初始化法典(黑暗版)
+    magic_data_dark = json.load(f)
+magic_data_dark_title = []
+for i in magic_data_dark:
+    magic_data_dark_title.append(i) #初始化黑暗法典目录
 
 
 ip_token_list = [(i, j) for i in config['api_ip'] for j in config['token'] if i != j] #初始化ip和token的列表(轮询池)
@@ -241,13 +258,6 @@ async def get_imgdata(tagdict:dict,way=1,shape="Portrait",b_io=None):#way=1时�
             continue
         i=999
         error_msg = ""
-    try:
-        msg=""
-        msgdata = json.loads(re.findall('{"steps".+?}',str(imgdata))[0])
-        msg = f'\nseed:{msgdata["seed"]}   scale:{msgdata["scale"]}'
-    except Exception as e:
-        error_msg = f"获取图片信息失败"
-        return result_msg,error_msg
     try :
         pid = await pic_save_temp(imgdata)
     except Exception as e:
@@ -260,7 +270,7 @@ async def get_imgdata(tagdict:dict,way=1,shape="Portrait",b_io=None):#way=1时�
     except Exception as e:
         error_msg = error_msg.join("处理图像失败{e}")
         return result_msg,error_msg
-    result_msg = f"[CQ:image,file={imgmes}]{msg}\npid:{pid}"
+    result_msg = f"[CQ:image,file={imgmes}]\npid:{pid}"
     return result_msg,error_msg
 
 
@@ -368,14 +378,16 @@ async def img_make(msglist,page = 1):
     result_msg = f"[CQ:image,file={imgmes}]"
     return result_msg
 
-async def check_pic_(gid,uid,msg,page):
+async def check_pic_(gid,uid,msg):
     error_msg = ""
+    msg = re.search("(.{2})\s*([0-9]*)", str(msg))
+    page = 1 if not msg[2] else int(msg[2])
     num = page*config['per_page_num']
-    if msg == "本群":
+    if msg[1] == "本群":
         msglist = db.get_pic_list_group(gid,num)
-    elif msg == "个人":
+    elif msg[1] == "个人":
         msglist = db.get_pic_list_personal(uid,num)
-    elif msg == "全部":
+    elif msg[1] == "全部":
         msglist = db.get_pic_list_all(num)
     else:
         error_msg = "参数错误"
@@ -488,40 +500,46 @@ async def pic_super_(message,msg):
     return result_msg,error_msg
 
 
+async def mix_magic_(msg):
+    error_msg = ""
+    magic_msg = ""
+    magic_msg_pure = ""
+    magic_id_list = re.split('\\s+',msg)
+    for i in magic_id_list:
+        if i in magic_data_title:
+            magic_msg += f'{magic_data[i]["tags"]},'
+            magic_msg_pure += f'{magic_data_pure[i]["tags"]},'
+            magic_msg_ntag = magic_data[i]["ntags"]
+            magic_msg_scale = magic_data[i]["scale"]
+    if not magic_msg:
+        error_msg = "发动魔法失败"
+        return error_msg,None,None,None
+    magic_list = re.split(',',magic_msg)
+    magic_list_pure = re.split(',',magic_msg_pure)
+    for i in range(len(magic_list)-1,-1,-1):
+        j=i-1
+        if i == 0:
+            break
+        for j in range(j,-1,-1):
+            seq=  difflib.SequenceMatcher(lambda x: x ==" ",magic_list_pure[i],magic_list_pure[j])
+            if seq.ratio()> config['max_ratio']: #相似度大于0.8则删除
+                magic_list[j] = ""
+                magic_list_pure[j] = ""
+    while "" in magic_list:
+        magic_list.remove("")
+    magic_msg_tag = ",".join(magic_list)
+    if "咏唱" in msg:
+        dark = random.choice(magic_data_dark_title)
+        magic_msg_tag += f'{magic_data_dark[dark]["tags"]},'
+        magic_msg_ntag = magic_data_dark[dark]["ntags"]
+    return error_msg,magic_msg_tag,magic_msg_ntag,magic_msg_scale
+    #融合魔法以最后融合的魔法作为基准!!!
 
-
-async def get_imgdata_magic(tags):#way=1时为get，way=0时为post
-    error_msg =""  #报错信息
-    result_msg = ""
-    i = 0
-    while i < len(ip_token_list):
-        await asyncio.sleep(1) #防止过快
-        i += 1
-        print(f"第{i}次查询")
-        api_ip,token = await retry_get_ip_token(i-1)
-        try:
-            url = (f"http://{api_ip}/got_image") + (f"?tags={tags}")+ (f"&token={token}")
-            response = await aiorequests.get(url, timeout=180)
-            imgdata = await response.content
-            if len(imgdata) < 5000:
-                error_msg = "token冷却中~"
-                continue
-        except Exception as e:
-            error_msg = f"超时了~"
-            continue
-        i=999
-        error_msg = ""
-    try :
-        pid = await pic_save_temp(imgdata)
-    except Exception as e:
-        print(f"!!!保存失败{e}")
-    try:
-        img = Image.open(BytesIO(imgdata)).convert("RGB")
-        buffer = BytesIO()  # 创建缓存
-        img.save(buffer, format="png")
-        imgmes = 'base64://' + b64encode(buffer.getvalue()).decode()
-    except Exception as e:
-        error_msg = error_msg.join("处理图像失败{e}")
-        return result_msg,error_msg
-    result_msg = f"[CQ:image,file={imgmes}]\npid:{pid}"
-    return result_msg,error_msg
+async def get_magic_book_(msg):
+    error_msg = ""
+    error_msg,magic_msg_tag,magic_msg_ntag,magic_msg_scale = await mix_magic_(msg) #获取魔法书
+    if error_msg != "":
+        return None,error_msg,None
+    result_msg = magic_msg_tag +"&ntags="+ magic_msg_ntag +"&shape=Landscape"+"&scale=" + magic_msg_scale
+    tag_dict,error_msg,_ = await process_tags(1,1,result_msg,0,0,0,0)
+    return tag_dict,error_msg
