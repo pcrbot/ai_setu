@@ -71,7 +71,23 @@ async def say_sorry_me(bot, ev):
     tags,error_msg,tags_guolv=await until.process_tags(gid,uid,msg) #tags处理过程
     if error_msg:
         await bot.finish(ev, error_msg)
-    result_msg,error_msg = await until.get_imgdata_magic(tags) #图片处理过程
+    result_msg,error_msg = await until.get_imgdata(tags,way=0) #图片处理过程
+    if error_msg:
+        await bot.finish(ev, error_msg)
+    msg = f"二次元少女{name},{msg}"
+    msg = msg+ result_msg
+    await bot.send(ev, msg)
+
+@sv.on_fullmatch(('SD今天我要变成少女!','SD今天我是什么少女'))
+async def say_sorry_me_sd(bot, ev):
+    uid = ev.user_id
+    gid = ev.group_id
+    name = ev.sender['nickname']
+    msg,tags = await be_girl(uid)
+    tags,error_msg,tags_guolv=await until.process_tags(gid,uid,msg) #tags处理过程
+    if error_msg:
+        await bot.finish(ev, error_msg)
+    result_msg,error_msg = await until.get_imgdata_sd(tags,way=0) #图片处理过程
     if error_msg:
         await bot.finish(ev, error_msg)
     msg = f"二次元少女{name},{msg}"
