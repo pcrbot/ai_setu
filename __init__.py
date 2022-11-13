@@ -40,6 +40,25 @@ async def text2img(bot, ev):
     #result_msg = f"[CQ:reply,id={ev.message_id}]{result_msg}"     #回复形式发送,喜欢就取消注释,并注释下一行
     await bot.send(ev, result_msg, at_sender=True)
 
+
+@sv.on_prefix('SD绘图')
+async def text2img_sd(bot, ev):
+    #await bot.send(ev, f"收到指令,处理中~", at_sender=True) #触发回馈示例,喜欢就取消注释
+    gid = ev.group_id
+    uid = ev.user_id
+    tags = ev.message.extract_plain_text().strip()
+    tag_dict,error_msg,tags_guolv=await until.process_tags(gid,uid,tags) #tags处理过程
+    if len(error_msg):
+        await bot.send(ev, f"已报错：{error_msg}", at_sender=True)
+    if len(tags_guolv):
+        await bot.send(ev, f"已过滤：{tags_guolv}", at_sender=True)
+    result_msg,error_msg = await until.get_imgdata_sd(tag_dict,way=0)
+    if len(error_msg):
+        await bot.finish(ev, f"已报错：{error_msg}", at_sender=True)
+    #result_msg = f"[CQ:reply,id={ev.message_id}]{result_msg}"     #回复形式发送,喜欢就取消注释,并注释下一行
+    await bot.send(ev, result_msg, at_sender=True)
+
+
 @sv.on_keyword("以图绘图")
 async def img2img(bot, ev):
     gid = ev.group_id
@@ -203,7 +222,7 @@ async def del_img(bot, ev):
 async def magic_book(bot, ev):
     msg = ev.message.extract_plain_text().strip()
     if msg == "目录":
-        msg =f"元素法典目录:\n{str(magic.magic_data_title)}"
+        msg =f"元素法典目录:\n{str(until.magic_data_title)}"
         await bot.finish(ev, msg, at_sender=True)
     tag_dict,error_msg = await until.get_magic_book_(msg)
     if len(error_msg):
@@ -214,7 +233,19 @@ async def magic_book(bot, ev):
     await bot.send(ev, result_msg, at_sender=True)
 
 
-
+@sv.on_prefix("SD元素法典")
+async def magic_book_sd(bot, ev):
+    msg = ev.message.extract_plain_text().strip()
+    if msg == "目录":
+        msg =f"元素法典目录:\n{str(until.magic_data_title)}"
+        await bot.finish(ev, msg, at_sender=True)
+    tag_dict,error_msg = await until.get_magic_book_(msg)
+    if len(error_msg):
+        await bot.finish(ev, f"{error_msg}", at_sender=True)
+    result_msg,error_msg = await until.get_imgdata_sd(tag_dict,way=0)
+    if len(error_msg):
+        await bot.finish(ev, f"已报错：{error_msg}", at_sender=True)
+    await bot.send(ev, result_msg, at_sender=True)
 
 
 

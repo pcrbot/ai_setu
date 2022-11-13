@@ -254,7 +254,7 @@ async def get_imgdata_sd(tagdict:dict,way=1,shape="Portrait",b_io=None,size = No
     try:
         imgmes = 'base64://' + imgdata
     except Exception as e:
-        error_msg = error_msg.join("处理图像失败{e}")
+        error_msg = f"处理图像失败{e}"
         return result_msg,error_msg
     result_msg = f"[CQ:image,file={imgmes}]\npid:{pid}"
     return result_msg,error_msg
@@ -293,6 +293,8 @@ async def get_imgdata(tagdict:dict,way=1,shape="Portrait",b_io=None):#way=0时�
             continue
         i=999
         error_msg = ""
+    if error_msg:
+        return result_msg,error_msg
     try :
         pid = await pic_save_temp(imgdata)
     except Exception as e:
@@ -303,7 +305,7 @@ async def get_imgdata(tagdict:dict,way=1,shape="Portrait",b_io=None):#way=0时�
         img.save(buffer, format="PNG")
         imgmes = 'base64://' + b64encode(buffer.getvalue()).decode()
     except Exception as e:
-        error_msg = error_msg.join("处理图像失败{e}")
+        error_msg = f"处理图像失败{e}"
         return result_msg,error_msg
     result_msg = f"[CQ:image,file={imgmes}]\npid:{pid}"
     return result_msg,error_msg
