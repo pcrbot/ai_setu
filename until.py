@@ -69,7 +69,7 @@ async def guolv(sent):#过滤屏蔽词
     tags_guolv = ""
     for i in actree.iter(sent):
         sent_cp = sent_cp.replace(i[1][1], "")
-        tags_guolv = tags_guolv.join(f"{str(i[1][1])} ")
+        tags_guolv = f"{tags_guolv} {str(i[1][1])} "
     return sent_cp,tags_guolv
 
 async def process_tags(gid,uid,tags,add_db=config['add_db'],trans=config['trans'],limit_word=config['limit_word'],arrange_tags=config['arrange_tags']):
@@ -82,7 +82,7 @@ async def process_tags(gid,uid,tags,add_db=config['add_db'],trans=config['trans'
         id = ["tags=","ntags=","seed=","scale=","shape=","strength=","r18=","steps=","sampler=","restore_faces=","tiling="]
         tag_dict = {i: ("" if not [idx for idx in taglist if idx.startswith(i)] else [idx for idx in taglist if idx.startswith(i)][-1]).replace(i, '', 1)  for i in id }#取出tags+ntags+seed+scale+shape,每种只取列表最后一个,并删掉id
     except Exception as e:
-        error_msg = error_msg.join(f"tags初始化失败{e}")
+        error_msg = f"tags初始化失败{e}"
         return tags,error_msg,tags_guolv
     #翻译tags
     if trans:
@@ -96,14 +96,14 @@ async def process_tags(gid,uid,tags,add_db=config['add_db'],trans=config['trans'
             elif tag_dict["tags="]:
                 tag_dict["tags="] = await translate.tag_trans(tag_dict["tags="])#翻译
         except Exception as e:
-            error_msg = error_msg.join("翻译失败")
+            error_msg += "翻译失败"
             return tags,error_msg,tags_guolv
     #过滤tags,只过滤正面tags
     if limit_word:
         try:
             tag_dict["tags="],tags_guolv = await guolv(tag_dict["tags="].strip().lower())#过滤,转小写防止翻译出来大写
         except Exception as e:
-            error_msg = error_msg.join("过滤失败")
+            error_msg += "过滤失败"
             return tags,error_msg,tags_guolv
     #整理tags
     if arrange_tags:
@@ -116,7 +116,7 @@ async def process_tags(gid,uid,tags,add_db=config['add_db'],trans=config['trans'
                     tidylist.remove("")
                 tag_dict[i] = ",".join(tidylist)
         except Exception as e:
-            error_msg = error_msg.join(f"整理失败{e}")
+            error_msg += f"整理失败{e}"
             return tags,error_msg,tags_guolv
     #规范tags
     if not tag_dict["tags="]:
@@ -124,7 +124,7 @@ async def process_tags(gid,uid,tags,add_db=config['add_db'],trans=config['trans'
     if not tag_dict["ntags="]:
         tag_dict["ntags="] = config['ntags_moren']#默认负面tags
     if config["ntags_safe"]:
-        tag_dict["ntags="] = config["ntags_safe"].join(f",{tag_dict['ntags=']}")#默认安全负面tags
+        tag_dict["ntags="] = (f"{config['ntags_safe']},{tag_dict['ntags=']}")#默认安全负面tags
     if not tag_dict["scale="]:
         tag_dict["scale="] = config['scale_moren']#默认scale
     if tag_dict["shape="] and tag_dict["shape="].capitalize() in ["Portrait","Landscape","Square"]:
@@ -150,7 +150,7 @@ async def process_tags(gid,uid,tags,add_db=config['add_db'],trans=config['trans'
             for tag in taglist3:
                 db.add_xp_num(gid,uid,tag)
         except Exception as e:
-            error_msg = error_msg.join("上传失败")
+            error_msg += "上传失败"
             return tags,error_msg,tags_guolv
     return tag_dict,error_msg,tags_guolv
 
@@ -325,7 +325,7 @@ async def get_xp_list_(msg,gid,uid):
     if len(xp_list)>0:
         for xpinfo in xp_list:
             keyword, num = xpinfo
-            result_msg = result_msg.join(f'关键词：{keyword}||次数：{num}\n')
+            result_msg = result_msg + (f'关键词：{keyword}||次数：{num}\n')
     else:
         result_msg = f'暂无{msg}的XP信息'
     return result_msg,error_msg
