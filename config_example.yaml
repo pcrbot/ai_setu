@@ -6,7 +6,7 @@ api_ip:
   - '91.216.169.75:5010' #主服务器
   - '185.80.202.180:5010' #备用服务器2
 
-sd_api_ip: "http://{ip}" #sdui的api的ip,用来以图绘图
+sd_api_ip: "http://{ip}" #sdui的api的ip,比如http://119.45.94.179:7860
 ##2.访问上述ip/token 获取
 token:
   - ''
