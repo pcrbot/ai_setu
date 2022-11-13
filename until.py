@@ -123,7 +123,7 @@ async def process_tags(gid,uid,tags,add_db=config['add_db'],trans=config['trans'
         tag_dict["tags="] = config['tags_moren']#默认正面tags
     if not tag_dict["ntags="]:
         tag_dict["ntags="] = config['ntags_moren']#默认负面tags
-    if not config["ntags_safe"]:
+    if config["ntags_safe"]:
         tag_dict["ntags="] = config["ntags_safe"].join(f",{tag_dict['ntags=']}")#默认安全负面tags
     if not tag_dict["scale="]:
         tag_dict["scale="] = config['scale_moren']#默认scale
