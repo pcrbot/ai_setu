@@ -79,7 +79,7 @@ async def process_tags(gid,uid,tags,add_db=config['add_db'],trans=config['trans'
     try:
         tags = f"tags={tags.strip().lower()}" #去除首尾空格换行#转小写#头部加上tags= #转小写方便处理
         taglist = re.split('&',tags) #分割
-        id = ["tags=","ntags=","seed=","scale=","shape=","strength=","r18=","steps=","sampler=","restore_faces=","tiling="]
+        id = ["tags=","ntags=","seed=","scale=","shape=","strength=","r18=","steps=","sampler=","restore_faces=","tiling=","bigger="]
         tag_dict = {i: ("" if not [idx for idx in taglist if idx.startswith(i)] else [idx for idx in taglist if idx.startswith(i)][-1]).replace(i, '', 1)  for i in id }#取出tags+ntags+seed+scale+shape,每种只取列表最后一个,并删掉id
     except Exception as e:
         error_msg = f"tags初始化失败{e}"
@@ -141,6 +141,7 @@ async def process_tags(gid,uid,tags,add_db=config['add_db'],trans=config['trans'
         tag_dict["restore_faces="] = False#默认restore_faces
     if not tag_dict["tiling="] and tag_dict["tiling="] !=  "True":
         tag_dict["tiling="] = False#默认tiling
+    tag_dict["bigger="] = False if not tag_dict["bigger="] else True#默认bigger
     #上传XP数据库
     if add_db:
         try:
@@ -208,6 +209,8 @@ async def get_imgdata_sd(tagdict:dict,way=1,shape="Portrait",b_io=None,size = No
             width,height = 768,512
         elif shape == "Square":
             width,height = 640,640
+        if tagdict["bigger="]:
+            width,height = width+128,height+128
         url = f"{config['sd_api_ip']}/sdapi/v1/txt2img"
         json_data = {
           "enable_hr": False,
@@ -227,6 +230,15 @@ async def get_imgdata_sd(tagdict:dict,way=1,shape="Portrait",b_io=None,size = No
         url = f"{config['sd_api_ip']}/sdapi/v1/img2img"
         data = ["data:image/jpeg;base64," + base64.b64encode(b_io.getvalue()).decode()]
         width,height = size
+        if tagdict["bigger="]:
+            width,height = width*2,height*2
+        c = width/height
+        n = 1000000 #最大像素
+        if width*height > n:
+            height = math.ceil(math.sqrt(n/c))
+            width = math.ceil(c*height)
+        width = math.ceil(width/64)*64
+        height = math.ceil(height/64)*64 #等比缩放为64的倍数
         if not tagdict["strength="]:
             tagdict["strength="] = config['strength_moren']#默认噪声
         json_data = {
@@ -353,7 +365,7 @@ async def get_xp_pic_(msg,gid,uid):
 async def get_pic_d(msg):
     error_msg = ""  # 报错信息
     try:
-        image_url = re.search(r"\[CQ:image,file=(.*)url=(.*?)[,|\]]", str(msg))
+        image_url = re.search(r"\[CQ:image,file=(.*)url=(.*?)[,\];]", str(msg))
         url = image_url.group(2)
     except Exception as e:
         error_msg = "你的图片呢？"
@@ -364,12 +376,6 @@ async def get_pic_d(msg):
         a,b = image.size
         c = a/b
         s = [0.6667,1.5,1]
-        n = 1000000 #最大像素
-        if a*b > n:
-            b = math.ceil(math.sqrt(n/c))
-            a = math.ceil(c*b)
-        a = math.ceil(a/64)*64
-        b = math.ceil(b/64)*64 #等比缩放为64的倍数
         size = (a,b)
         s1 =["Portrait","Landscape","Square"]
         shape=s1[s.index(nsmallest(1, s, key=lambda x: abs(x-c))[0])]#判断形状

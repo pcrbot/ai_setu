@@ -80,7 +80,3 @@ help_msg5={
         }
   }
 help_msg_all = [help_msg1,help_msg2,help_msg3,help_msg4,help_msg5]
-
-
-
-

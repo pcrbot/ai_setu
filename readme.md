@@ -1,50 +1,32 @@
 # AI_SETU
 
-> 2022/11/10 21:00 更新内容:以图绘图改为使用stable diffusion UI的api
->
-> 2022/10/24 20:   00 更新内容：合并今日少女插件(deemo)
->
-> 2022/10/22 23:   40 更新内容：添加help.py,拆分文件
->
-> 2022/10/22 15:   20 更新内容：使用yaml作为配置文件,拆分文件
->
-> 2022/10/21 12：30 更新内容：动漫化指令,元素魔典逻辑修改
->
-> 2022/10/18 18：56 更新内容：元素魔典原型指令,重新config.py添加轮询机制
->
-> 2022/10/17 18：55 更新内容：图片相关指令均可通过回复触发，重写config.py，重写pic超分，重写图片鉴赏
->
-> 2022/10/16 18：47 更新内容：更新pic超分相关内容，重写config.py
->
-> 2022/10/13 18：47 更新内容：把一些看着难看的函数合并到until.py，查看pic添加每页最大参数
->
-> 2022/10/11 21：47 更新内容：pic的上传，查看，点赞
+![效果图](TempImage/readme.jpg)
 
 ### **介绍**
 
-利用路路佬的API，实现HoshinoBot快速进行AI绘图。
+利用[Stable Diffusion web UI](https://github.com/AUTOMATIC1111/stable-diffusion-webui) 的api 或是路路提供的友情api来实现**HoshinoBot**快速进行AI绘图。
 
-快捷调用huggingface的仓库和开源模型
-
-### 额外依赖
-
-hjson,pyahocorasick,pyyaml
+额外提供快捷调用huggingface的某几个特定仓库和开源模型的方法
 
 ### 使用方法
 
-- 装额外依赖
+- 装额外依赖 `hjson`,`pyahocorasick`,`pyyaml`,`aiofiles`
+
+  ```
+  pip install XXX
+  ```
 - 命令行输入
 
   ```
   cp config_example.yaml config.yaml
   ```
 
-  然后自行修改 `config.yaml`
+  然后根据注释提示自行修改 `config.yaml`
 
 ### 功能
 
-* **绘图**
-* **以图绘图**
+* **(SD)绘图**
+* **(SD)以图绘图**
 * **个人/本群XP排行/缝合**
 * **上传pic**
 * **查看本群/个人/全部pic**
@@ -52,5 +34,12 @@ hjson,pyahocorasick,pyyaml
 * **超分pic x倍超分 [保守/不]降噪   X为2，3，4   []内为可选参数**
 * **鉴赏图片**
 * **动漫化**
-* **元素法典吟唱**
-* **今天我是什么少女**
+* **(SD)元素法典吟唱**
+* **(SD)今天我是什么少女**
+
+前缀含有**SD**则使用[Stable Diffusion web UI](https://github.com/AUTOMATIC1111/stable-diffusion-webui) 的api
+
+无前缀默认使用路路提供的友情api
+
+
+**PS:渣代码,欢迎提出改进建议~**
