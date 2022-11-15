@@ -528,7 +528,7 @@ async def pic_super_(message,msg):
             con = "denoise3x"
         else:
             con = "no-denoise"
-        modelname = f"up{scale}x-latest-{con}.pth" if "专业" not in msg or scale == 4 else "up{scale}x-pro-{con}.pth"
+        modelname = f"up{scale}x-latest-{con}.pth" if "专业" not in msg or scale == 4 else f"up{scale}x-pro-{con}.pth"
     except Exception as e:
         error_msg = error_msg.join("超分参数错误")
         return result_msg,error_msg
