@@ -6,7 +6,7 @@ api_ip:
   - '91.216.169.75:5010' #主服务器
   - '185.80.202.180:5010' #备用服务器2
 
-sd_api_ip: "http://{ip}" #sdui的api的ip,比如http://119.45.94.179:7860
+sd_api_ip: "http://81.69.176.219:7860" #sdui的api的ip,比如http://81.69.176.219:7860,请勿传播,仅供HoshinoBot使用
 ##2.访问上述ip/token 获取
 token:
   - ''
@@ -54,17 +54,17 @@ wordlist: ['&r18=1', 'nake', 'vagina', 'penis', 'nsfw', 'genital', 'nude', 'nipp
 
 #鉴赏图片功能
 img2tag: True #是否开启
-img2tags_url: "https://hf.space/embed/NoCrypt/DeepDanbooru_string" #有排队功能的DeepDanbooru仓库,默认及格式: https://hf.space/embed/hysts/DeepDanbooru(用这个得改一改) 即https://hf.space/embed/{ID}/{仓库名}
+img2tags_url: "https://hf.space/embed/NoCrypt/DeepDanbooru_string/api/predict/" #有排队功能的DeepDanbooru仓库,默认及格式: https://hf.space/embed/hysts/DeepDanbooru/api/predict/(用这个得改一改) 即https://hf.space/embed/{ID}/{仓库名}/api/predict/
 img2tags_url_timeout: 30 #请求超时时间
 
 #图片动漫化功能
 img2anime: False #是否开启
-img2anime_url: "" #有排队功能的White-box-Cartoonization仓库,默认及格式: https://hf.space/embed/hylee/White-box-Cartoonization
+img2anime_url: "http://81.69.176.219:8081/run/predict/" #有排队功能的White-box-Cartoonization仓库,默认及格式: https://hf.space/embed/hylee/White-box-Cartoonization/api/predict/
 img2anime_url_timeout: 120
 
 #超分图片功能
 picsuper: False #是否开启
-pic_super_url: "" #有排队功能的Real-CUGAN仓库,无默认,格式: https://hf.space/embed/{XXXXX}/Real-CUGAN 或其它
+pic_super_url: "http://81.69.176.219:8080/run/predict/" #有排队功能的Real-CUGAN仓库,无默认,格式: https://hf.space/embed/{XXXXX}/Real-CUGAN/api/predict/ 或其它
 max_size: 11664000 #超分图片的最大尺寸为1080*1080,过大有风险
 pic_super_timeout: 120
 

@@ -117,7 +117,7 @@ async def get_xp_pic(bot, ev):
         await bot.send(ev, f"已报错：{error_msg}", at_sender=True)
     if len(tags_guolv):
         await bot.send(ev, f"已过滤：{tags_guolv}", at_sender=True)
-    result_msg,error_msg = await until.get_imgdata(tag_dict)
+    result_msg,error_msg = await until.get_imgdata(tag_dict,way=0)
     await bot.send(ev, result_msg, at_sender=True)
 
 
@@ -227,7 +227,7 @@ async def magic_book(bot, ev):
     tag_dict,error_msg = await until.get_magic_book_(msg)
     if len(error_msg):
         await bot.finish(ev, f"{error_msg}", at_sender=True)
-    result_msg,error_msg = await until.get_imgdata(tag_dict)
+    result_msg,error_msg = await until.get_imgdata(tag_dict,way=0)
     if len(error_msg):
         await bot.finish(ev, f"已报错：{error_msg}", at_sender=True)
     await bot.send(ev, result_msg, at_sender=True)

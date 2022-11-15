@@ -6,7 +6,7 @@ import asyncio
 gradio 调用api的方法,大概通用
 '''
 
-async def quene_fetch_(url,_hash,max_try):
+'''async def quene_fetch_(url,_hash,max_try):
     #报错信息
     result_msg = ""
     error_msg = ""
@@ -45,13 +45,13 @@ async def quene_push_(url,json_data,max_try=60):
         return result_msg,error_msg
     max_try= max_try
     result_msg,error_msg = await quene_fetch_(url,_hash,max_try) #获取结果 resj['data']['data'][0]
-    return result_msg,error_msg
+    return result_msg,error_msg'''
 
 
 async def predict_push_(url,json_data,max_try=60):
     result_msg = ""
     error_msg = ""
-    url_predict = f'{url}/api/predict/'
+    url_predict = url
     json = {
         "session_hash": str(uuid.uuid1()),
         "data": json_data,
@@ -67,5 +67,3 @@ async def predict_push_(url,json_data,max_try=60):
     except Exception as e:
         error_msg = f"请求失败 失败原因:{e},获取内容{resj}"
     return result_msg,error_msg
-
-
