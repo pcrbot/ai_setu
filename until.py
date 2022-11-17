@@ -257,7 +257,7 @@ async def get_imgdata_sd(tagdict:dict,way=1,shape="Portrait",b_io=None,size = No
             "sampler_index": tagdict["sampler="]
         }
     response = await aiorequests.post(url,json=json_data,headers = {"Content-Type": "application/json"})
-    imgdata = await response.json()
+    imgdata = await response.json()#报错反馈,待完成
     imgdata = imgdata["images"][0]
     try :
         pid = await pic_save_temp(base64.b64decode(imgdata))
