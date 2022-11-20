@@ -125,18 +125,12 @@ async def process_tags(gid,uid,tags,add_db=config['add_db'],trans=config['trans'
         tag_dict["ntags="] = config['ntags_moren']#默认负面tags
     if config["ntags_safe"]:
         tag_dict["ntags="] = (f"{config['ntags_safe']},{tag_dict['ntags=']}")#默认安全负面tags
-    if not tag_dict["scale="]:
-        tag_dict["scale="] = config['scale_moren']#默认scale
     if tag_dict["shape="] and tag_dict["shape="].capitalize() in ["Portrait","Landscape","Square"]:
         tag_dict["shape="] = tag_dict["shape="].capitalize()
     else:
-        tag_dict["shape="] = config['shape_moren']#默认形状
+        tag_dict["shape="] = config['txt2img_shape_moren']#默认形状
     if not tag_dict["r18="]:
         tag_dict["r18="] = config['r18_moren']#默认r18参数
-    if not tag_dict["steps="]:
-        tag_dict["steps="] = "30"#默认steps
-    if not tag_dict["sampler="]:
-        tag_dict["sampler="] = "Euler a"#默认sampler
     if not tag_dict["restore_faces="] and tag_dict["restore_faces="] !=  "True":
         tag_dict["restore_faces="] = False#默认restore_faces
     if not tag_dict["tiling="] and tag_dict["tiling="] !=  "True":
@@ -211,6 +205,14 @@ async def get_imgdata_sd(tagdict:dict,way=1,shape="Portrait",b_io=None,size = No
             width,height = 640,640
         if tagdict["bigger="]:
             width,height = width+128,height+128
+        if not tagdict["steps="] or not tagdict["steps="].isdigit():
+            tagdict["steps="] = config["txt2img_steps_moren"] #默认steps
+        else:
+            tagdict["steps="] = config["txt2img_steps_moren"]  if int(tagdict["steps="])>config["txt2img_steps_max"]  else tagdict["steps="]#超过最大步数
+        if not tagdict["sampler="]:
+            tagdict["sampler="] = config["txt2img_sampler_moren"]#默认sampler
+        if not tagdict["scale="]:
+            tagdict["scale="] = config['txt2img_scale_moren']#默认scale
         url = f"{config['sd_api_ip']}/sdapi/v1/txt2img"
         json_data = {
           "enable_hr": False,
@@ -220,7 +222,7 @@ async def get_imgdata_sd(tagdict:dict,way=1,shape="Portrait",b_io=None,size = No
           "cfg_scale": tagdict["scale="],
           "width": width,
           "height": height,
-          "restore_faces": tagdict["restore_faces="],
+          "最大像素restore_faces": tagdict["restore_faces="],
           "tiling": tagdict["tiling="],
           "negative_prompt": tagdict["ntags="],
           "sampler_index": tagdict["sampler="]
@@ -240,7 +242,15 @@ async def get_imgdata_sd(tagdict:dict,way=1,shape="Portrait",b_io=None,size = No
         width = math.ceil(width/64)*64
         height = math.ceil(height/64)*64 #等比缩放为64的倍数
         if not tagdict["strength="]:
-            tagdict["strength="] = config['strength_moren']#默认噪声
+            tagdict["strength="] = config['img2img_strength_moren']#默认噪声
+        if not tagdict["steps="] or not tagdict["steps="].isdigit():
+            tagdict["steps="] = config["img2img_steps_moren"] #默认steps
+        else:
+            tagdict["steps="] = config["img2img_steps_moren"]  if int(tagdict["steps="])>config["img2img_steps_max"]  else tagdict["steps="]#超过最大步数
+        if not tagdict["sampler="]:
+            tagdict["sampler="] = config["img2img_sampler_moren"]#默认sampler
+        if not tagdict["scale="]:
+            tagdict["scale="] = config['img2img_scale_moren']#默认scale
         json_data = {
             "init_images": data,
             "resize_mode": 0,
@@ -276,7 +286,7 @@ async def get_imgdata(tagdict:dict,way=1,shape="Portrait",b_io=None):#way=0时�
     error_msg =""  #报错信息
     result_msg = ""
     if not way and not tagdict["strength="]:
-        tagdict["strength="] = config['strength_moren']#默认噪声
+        tagdict["strength="] = config['img2img_strength_moren']#默认噪声
     #合并tags
     tags = tagdict["tags="]
     id = ["tags=","ntags=","seed=","scale=","shape=","strength=","r18="]
@@ -548,12 +558,14 @@ async def mix_magic_(msg):
     magic_msg = ""
     magic_msg_pure = ""
     magic_id_list = re.split('\\s+',msg)
+    num = config["max_magic_num"]
     for i in magic_id_list:
-        if i in magic_data_title:
+        if i in magic_data_title and num:
             magic_msg += f'{magic_data[i]["tags"]},'
             magic_msg_pure += f'{magic_data_pure[i]["tags"]},'
             magic_msg_ntag = magic_data[i]["ntags"]
             magic_msg_scale = magic_data[i]["scale"]
+            num -=1
     if not magic_msg:
         error_msg = "发动魔法失败"
         return error_msg,None,None,None
