@@ -43,7 +43,7 @@ async def text2img(bot, ev):
 
 @sv.on_prefix('SD绘图')
 async def text2img_sd(bot, ev):
-    #await bot.send(ev, f"收到指令,处理中~", at_sender=True) #触发回馈示例,喜欢就取消注释
+    to_del = await bot.send(ev, f"收到指令,AI创作中~", at_sender=True) #反馈互动
     gid = ev.group_id
     uid = ev.user_id
     tags = ev.message.extract_plain_text().strip()
@@ -55,12 +55,14 @@ async def text2img_sd(bot, ev):
     result_msg,error_msg = await until.get_imgdata_sd(tag_dict,way=0)
     if len(error_msg):
         await bot.finish(ev, f"已报错：{error_msg}", at_sender=True)
+    await bot.delete_msg(message_id=to_del['message_id'])#撤回反馈互动,防止刷屏
     #result_msg = f"[CQ:reply,id={ev.message_id}]{result_msg}"     #回复形式发送,喜欢就取消注释,并注释下一行
     await bot.send(ev, result_msg, at_sender=True)
 
 
 @sv.on_keyword("以图绘图")
 async def img2img(bot, ev):
+    to_del = await bot.send(ev, f"收到指令,AI创作中~", at_sender=True) #反馈互动
     gid = ev.group_id
     uid = ev.user_id
     tags = ev.message.extract_plain_text().replace("以图绘图","").strip()
@@ -78,6 +80,7 @@ async def img2img(bot, ev):
     result_msg,error_msg = await until.get_imgdata_sd(tag_dict,way=1,shape=shape,b_io=b_io,size=size) #绘图过程
     if len(error_msg):
         await bot.finish(ev, f"已报错：{error_msg}", at_sender=True)
+    await bot.delete_msg(message_id=to_del['message_id'])#撤回反馈互动,防止刷屏
     await bot.send(ev, result_msg, at_sender=True)
 
 
@@ -200,8 +203,23 @@ async def del_img(bot, ev):
     await bot.send(ev, msg, at_sender=True)
 
 
+@sv.on_fullmatch(["SD模型目录"])
+async def model_list(bot, ev):
+    msg = await until.get_model_list()
+    await bot.send(ev, msg, at_sender=True)
 
 
+@sv.on_prefix("SD模型切换")
+async def model_change(bot, ev):
+    if not priv.check_priv(ev,priv.ADMIN):
+        msg = "只有管理才能切换"
+        await bot.finish(ev, msg, at_sender=True)
+    model = ev.message.extract_plain_text().strip()
+    msg = await until.change_model(model)
+    if msg:
+        await bot.send(ev, msg, at_sender=True)
+    else:
+        await bot.finish(ev, '模型切换成功', at_sender=True)
 
 
 
@@ -248,7 +266,19 @@ async def magic_book_sd(bot, ev):
     await bot.send(ev, result_msg, at_sender=True)
 
 
-
+@sv.on_prefix("SD元素法典")
+async def magic_book_sd(bot, ev):
+    msg = ev.message.extract_plain_text().strip()
+    if msg == "目录":
+        msg =f"元素法典目录:\n{str(until.magic_data_title)}"
+        await bot.finish(ev, msg, at_sender=True)
+    tag_dict,error_msg = await until.get_magic_book_(msg)
+    if len(error_msg):
+        await bot.finish(ev, f"{error_msg}", at_sender=True)
+    result_msg,error_msg = await until.get_imgdata_sd(tag_dict,way=0)
+    if len(error_msg):
+        await bot.finish(ev, f"已报错：{error_msg}", at_sender=True)
+    await bot.send(ev, result_msg, at_sender=True)
 
 
 

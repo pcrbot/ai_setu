@@ -31,14 +31,20 @@ img2img_steps_max: 60 #最高步数
 img2img_sampler_moren: "Euler a" #Euler a是低阶采样,所以步数较多
 img2img_scale_moren: 11
 img2img_strength_moren: "0.60" #与原图关联性,越低越关联
-
+resize_mode: 0 #0:Just resize 1:Crop and resize 2:Resize and fill 理论差别较小
 ##4. 绘图超时时间，单位秒
 draw_timeout: 180
 ##5. 元素法典相似度,高于该值的魔咒会被覆盖
 max_ratio: 0.8
 max_magic_num: 4 #每次能融合的魔法书个数
 
+
 #可选项!
+
+#为SD webui 添加模型切换功能
+sd_model_list: [] #此列表填入你的模型名称比如'WAVE.ckpt [aa184ecf]', 'LMD.ckpt [00af0baa]', 'CAZE.ckpt [2dd97233]', 'FOD.ckpt [c578a332]'
+#欢迎下载自炼模型链接：https://pan.baidu.com/s/1hY24_ZH9UfV0mT5-qHcppw?pwd=2333
+
 #整理tags功能
 arrange_tags: True
 #数据库相关功能

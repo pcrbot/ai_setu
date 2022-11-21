@@ -62,6 +62,29 @@ for index, word in enumerate(config['wordlist']):
     actree.add_word(word, (index, word))
 actree.make_automaton() #初始化完成，一般来说重启才能重载屏蔽词
 
+model_list = config["sd_model_list"] #模型列表
+
+async def get_model_list():
+    url = f"{config['sd_api_ip']}/sdapi/v1/options"
+    response = await aiorequests.get(url,headers = {"Content-Type": "application/json"})
+    optionsdata = await response.json()
+    msg = f"\n正在使用的模型：\n{optionsdata['sd_model_checkpoint']}\n模型列表:\n"
+    msg1 = "\n".join(model_list) if model_list else "无"
+    msg += msg1
+    return msg
+
+async def change_model(msg):
+    model = msg.strip()
+    if model in model_list:
+        url = f"{config['sd_api_ip']}/sdapi/v1/options"
+        data = {"sd_model_checkpoint":model}
+        response = await aiorequests.post(url,headers = {"Content-Type": "application/json"},json=data)
+        optionsdata = await response.json()
+        if optionsdata:
+            return f"模型切换失败"
+    else:
+        return f"模型切换失败"
+
 
 
 async def guolv(sent):#过滤屏蔽词
@@ -253,7 +276,7 @@ async def get_imgdata_sd(tagdict:dict,way=1,shape="Portrait",b_io=None,size = No
             tagdict["scale="] = config['img2img_scale_moren']#默认scale
         json_data = {
             "init_images": data,
-            "resize_mode": 0,
+            "resize_mode": config["resize_mode"],
             "denoising_strength": tagdict["strength="],
             "prompt": tagdict["tags="],
             "seed": tagdict["seed="],
@@ -537,7 +560,7 @@ async def pic_super_(message,msg):
         elif "降噪" in msg:
             con = "denoise3x"
         else:
-            con = "no-denoise"
+            con = "denoise3x"
         modelname = f"up{scale}x-latest-{con}.pth" if "专业" not in msg or scale == 4 else f"up{scale}x-pro-{con}.pth"
     except Exception as e:
         error_msg = error_msg.join("超分参数错误")
@@ -596,5 +619,5 @@ async def get_magic_book_(msg):
     if error_msg != "":
         return None,error_msg,None
     result_msg = magic_msg_tag +"&ntags="+ magic_msg_ntag +"&shape=Landscape"+"&scale=" + magic_msg_scale
-    tag_dict,error_msg,_ = await process_tags(1,1,result_msg,0,0,0,0)
+    tag_dict,error_msg,tags_guolv = await process_tags(1,1,result_msg,0,0,0,0)
     return tag_dict,error_msg
