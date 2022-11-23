@@ -9,7 +9,7 @@ import time,calendar
 import os
 import math
 from os.path import dirname, join, exists
-from . import translate,db,easygradio
+from . import translate,db,easygradio,help
 import ahocorasick
 import asyncio
 import yaml
@@ -25,7 +25,9 @@ except:
 
 curpath = dirname(__file__) #当前路径
 save_image_path= join(curpath,'SaveImage')  # 保存图片路径
-font_path = join(curpath,"weiheijun.ttf")  #字体文件路径
+
+font_path = join(curpath,"./resources/font/093.ttf")  #字体文件路径
+
 config_path = join(curpath,"config.yaml")
 if not exists(save_image_path):
     os.mkdir(save_image_path) #创建img保存目录
@@ -39,15 +41,15 @@ with open(config_path,encoding="utf-8") as f: #初始化配置文件
     config = yaml.safe_load(f)#读取配置文件
 
 
-with open(join(curpath, './magicbooks/magic.json'),encoding="utf-8") as f: #初始化法典
+with open(join(curpath, './resources/magicbooks/magic.json'),encoding="utf-8") as f: #初始化法典
     magic_data = json.load(f)
-with open(join(curpath, './magicbooks/magic_pure.json'),encoding="utf-8") as f: #初始化法典(纯净版)
+with open(join(curpath, './resources/magicbooks/magic_pure.json'),encoding="utf-8") as f: #初始化法典(纯净版)
     magic_data_pure = json.load(f)
 magic_data_title = []
 for i in magic_data:
     magic_data_title.append(i) #初始化法典目录
 
-with open(join(curpath, './magicbooks/magic_dark.json'),encoding="utf-8") as f: #初始化法典(黑暗版)
+with open(join(curpath, './resources/magicbooks/magic_dark.json'),encoding="utf-8") as f: #初始化法典(黑暗版)
     magic_data_dark = json.load(f)
 magic_data_dark_title = []
 for i in magic_data_dark:
@@ -62,19 +64,46 @@ for index, word in enumerate(config['wordlist']):
     actree.add_word(word, (index, word))
 actree.make_automaton() #初始化完成，一般来说重启才能重载屏蔽词
 
-model_list = config["sd_model_list"] #模型列表
+help.救命啊() #初始化帮助
+
+async def helpyou():
+    with open(curpath + '/help_main.jpg', 'rb') as f:
+            imagedata = f.read()
+    imgmes = 'base64://' + base64.b64encode(imagedata).decode()
+    msg = f"[CQ:image,file={imgmes}]"
+    return msg
+
+async def helpyou1():
+    with open(curpath + '/magic.jpg', 'rb') as f:
+            imagedata = f.read()
+    imgmes = 'base64://' + base64.b64encode(imagedata).decode()
+    msg = f"[CQ:image,file={imgmes}]"
+    return msg
+
+async def get_models():
+    url = f"{config['sd_api_ip']}/sdapi/v1/sd-models"
+    response = await aiorequests.get(url,headers = {"Content-Type": "application/json"})
+    modeldata = await response.json()
+    model_list, model_name= [],[]
+    for i in modeldata:
+        model_list.append(i["title"])
+        model_name.append(i["model_name"])
+    return model_list
+
 
 async def get_model_list():
     url = f"{config['sd_api_ip']}/sdapi/v1/options"
     response = await aiorequests.get(url,headers = {"Content-Type": "application/json"})
     optionsdata = await response.json()
     msg = f"\n正在使用的模型：\n{optionsdata['sd_model_checkpoint']}\n模型列表:\n"
+    model_list = await get_models()
     msg1 = "\n".join(model_list) if model_list else "无"
     msg += msg1
     return msg
 
 async def change_model(msg):
     model = msg.strip()
+    model_list = await get_models()
     if model in model_list:
         url = f"{config['sd_api_ip']}/sdapi/v1/options"
         data = {"sd_model_checkpoint":model}
@@ -102,7 +131,7 @@ async def process_tags(gid,uid,tags,add_db=config['add_db'],trans=config['trans'
     try:
         tags = f"tags={tags.strip().lower()}" #去除首尾空格换行#转小写#头部加上tags= #转小写方便处理
         taglist = re.split('&',tags) #分割
-        id = ["tags=","ntags=","seed=","scale=","shape=","strength=","r18=","steps=","sampler=","restore_faces=","tiling=","bigger="]
+        id = ["tags=","ntags=","seed=","scale=","shape=","strength=","r18=","steps=","sampler=","restore_faces=","tiling=","bigger=","w=","h="]
         tag_dict = {i: ("" if not [idx for idx in taglist if idx.startswith(i)] else [idx for idx in taglist if idx.startswith(i)][-1]).replace(i, '', 1)  for i in id }#取出tags+ntags+seed+scale+shape,每种只取列表最后一个,并删掉id
     except Exception as e:
         error_msg = f"tags初始化失败{e}"
@@ -148,7 +177,7 @@ async def process_tags(gid,uid,tags,add_db=config['add_db'],trans=config['trans'
         tag_dict["ntags="] = config['ntags_moren']#默认负面tags
     if config["ntags_safe"]:
         tag_dict["ntags="] = (f"{config['ntags_safe']},{tag_dict['ntags=']}")#默认安全负面tags
-    if tag_dict["shape="] and tag_dict["shape="].capitalize() in ["Portrait","Landscape","Square"]:
+    if tag_dict["shape="] and tag_dict["shape="] in ["portrait","landscape","square"]:
         tag_dict["shape="] = tag_dict["shape="].capitalize()
     else:
         tag_dict["shape="] = config['txt2img_shape_moren']#默认形状
@@ -185,9 +214,22 @@ async def pic_save_temp(imagedata):
         await f.write(imagedata)
     return pid
 
+
+async def pic_resize(width,height):
+    c = width/height
+    n = config["pic_max"] #最大像素
+    if width*height > n:
+        height = math.ceil(math.sqrt(n/c))
+        width = math.ceil(c*height)
+    width = math.ceil(width/64)*64
+    height = math.ceil(height/64)*64 #等比缩放为64的倍数
+    return width,height
+
+
+
 async def get_pic_msg_temp(msg):
-    pid = re.search(r"pid:+([a-z0-9-]{36})",str(msg))[1]
     try:
+        pid = re.search(r"pid:+([a-z0-9-]{36})",str(msg))[1]
         img = Image.open(f"{temp_image_path}/{pid}.png")
     except:
         return f"找不到这个图片涅~"
@@ -228,6 +270,11 @@ async def get_imgdata_sd(tagdict:dict,way=1,shape="Portrait",b_io=None,size = No
             width,height = 640,640
         if tagdict["bigger="]:
             width,height = width+128,height+128
+        if tagdict["w="] and tagdict["w="].isdigit():
+            width = int(tagdict["w="])
+        if tagdict["h="] and tagdict["h="].isdigit():
+            height = int(tagdict["h="])
+        width,height = await pic_resize(width,height)#修正生成图的长宽为SD要求的64的倍数
         if not tagdict["steps="] or not tagdict["steps="].isdigit():
             tagdict["steps="] = config["txt2img_steps_moren"] #默认steps
         else:
@@ -257,13 +304,7 @@ async def get_imgdata_sd(tagdict:dict,way=1,shape="Portrait",b_io=None,size = No
         width,height = size
         if tagdict["bigger="]:
             width,height = width*2,height*2
-        c = width/height
-        n = 1000000 #最大像素
-        if width*height > n:
-            height = math.ceil(math.sqrt(n/c))
-            width = math.ceil(c*height)
-        width = math.ceil(width/64)*64
-        height = math.ceil(height/64)*64 #等比缩放为64的倍数
+        width,height = await pic_resize(width,height)#修正生成图的长宽为SD要求的64的倍数
         if not tagdict["strength="]:
             tagdict["strength="] = config['img2img_strength_moren']#默认噪声
         if not tagdict["steps="] or not tagdict["steps="].isdigit():
@@ -530,7 +571,7 @@ async def img2tags_(message,msg):
     result_msg = result_msg[1]
     #result_msg = result_msg['confidences']
     #result_msg = ','.join([f'{i["label"]}' for i in result_msg]).replace("rating:safe,","")
-    result_msg = f"\n鉴赏出的tags有:{result_msg}"
+    result_msg = f"\n鉴赏出的tags有:\n{result_msg}"
     return result_msg,error_msg
 
 async def pic_super_(message,msg):
@@ -557,6 +598,8 @@ async def pic_super_(message,msg):
             scale = 2
         if "保守降噪" in msg:
             con = "conservative"
+        elif "无降噪" in msg:
+            con = "no-denoise"
         elif "降噪" in msg:
             con = "denoise3x"
         else:

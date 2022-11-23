@@ -1,11 +1,11 @@
 # 2022.10.14 18:07
 import re
 from hoshino import Service, priv
-from . import db,until,help
+from . import db,until
 
 
 sv_help = '''
-[帮助 绘图]查看帮助
+[帮助绘图]查看帮助
 '''.strip()
 
 sv = Service(
@@ -18,9 +18,16 @@ sv = Service(
     help_ = sv_help #帮助文本
     )
 
-@sv.on_fullmatch(["帮助 绘图"])
+@sv.on_fullmatch(["帮助绘图"])
 async def cwbangzhu(bot, ev):
-    await bot.send_group_forward_msg(group_id=ev['group_id'], messages=help.help_msg_all)
+    msg = await until.helpyou()
+    await bot.send(ev, msg, at_sender=True)
+
+@sv.on_fullmatch("元素法典目录")
+async def cwbangzhu1(bot, ev):
+    msg = await until.helpyou1()
+    await bot.send(ev, msg, at_sender=True)
+
 
 
 @sv.on_prefix('绘图')
@@ -254,9 +261,6 @@ async def magic_book(bot, ev):
 @sv.on_prefix("SD元素法典")
 async def magic_book_sd(bot, ev):
     msg = ev.message.extract_plain_text().strip()
-    if msg == "目录":
-        msg =f"元素法典目录:\n{str(until.magic_data_title)}"
-        await bot.finish(ev, msg, at_sender=True)
     tag_dict,error_msg = await until.get_magic_book_(msg)
     if len(error_msg):
         await bot.finish(ev, f"{error_msg}", at_sender=True)
