@@ -37,7 +37,7 @@ resize_mode: 0 #0:Just resize 1:Crop and resize 2:Resize and fill 理论差别�
 draw_timeout: 180
 ##5. 元素法典相似度,高于该值的魔咒会被覆盖
 max_ratio: 0.8
-max_magic_num: 4 #每次能融合的魔法书个数
+max_magic_num: 8 #每次能融合的魔法书个数
 
 
 #可选项!
@@ -46,11 +46,13 @@ max_magic_num: 4 #每次能融合的魔法书个数
 
 #整理tags功能
 arrange_tags: True
+
 #数据库相关功能
 ##1. 是否开启数据录入
 add_db: True
 ##2. 用于查看图片时，每页最多有多少张图
 per_page_num: 32
+
 #翻译功能
 ##1. 是否开启翻译
 trans: True
@@ -63,11 +65,12 @@ youdao_app_key: ""
 baidu_url: "http://api.fanyi.baidu.com/api/trans/vip/translate"
 baidu_app_id: ""
 baidu_app_key: ""
+
 #过滤功能
 ##1. 是否开启违禁词过滤
 limit_word: True
 ##2. 违禁词表,字典树的方式,如 naked 会过滤掉 "nakedasdasda" 里的 "naked" 剩下 "dasdasda"
-wordlist: ['&r18=1', 'nake', 'vagina', 'penis', 'nsfw', 'genital', 'nude', 'nipple', 'vulv', 'no pant', 'clothes remove', 'rectum','%']
+wordlist: ['&r18=1', 'nake', 'vagina', 'penis', 'nsfw', 'genital', 'nude', 'nipple', 'vulv', 'no pant', 'clothes remove', 'rectum', '%']
 
 
 
@@ -78,11 +81,11 @@ img2tags_url_timeout: 30 #请求超时时间
 
 #图片动漫化功能
 img2anime: False #是否开启
-img2anime_url: "http://81.69.176.219:8081/run/predict/" #有排队功能的White-box-Cartoonization仓库
+img2anime_url: "http://81.69.176.219:8081/run/predict/" #White-box-Cartoonization仓库
 img2anime_url_timeout: 120
 
 #超分图片功能
 picsuper: False #是否开启
-pic_super_url: "http://81.69.176.219:8080/run/predict/" #有排队功能的Real-CUGAN仓库,无默认
+pic_super_url: "http://81.69.176.219:8080/run/predict/" #Real-CUGAN仓库,更好效果推荐自建,默认仓库已经设置2048*2048的大小限制
 max_size: 11664000 #超分图片的最大尺寸为1080*1080*10,过大有风险
 pic_super_timeout: 120

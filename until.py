@@ -253,6 +253,66 @@ async def get_pic_msg_temp(msg):
         FROM NOVELAI'''
     return msg
 
+#get_pic_descrip
+async def get_pic_descrip_(b_io):
+  try:
+      url = f"{config['sd_api_ip']}/sdapi/v1/interrogate"
+      data = "data:image/jpeg;base64," + base64.b64encode(b_io.getvalue()).decode()
+      json_data = {
+        "image": data,
+        "model": "clip",
+      }
+      response = await aiorequests.post(url,json=json_data,headers = {"Content-Type": "application/json"})
+      msgdata = await response.json()#报错反馈,待完成
+      msg = re.search(r"(.*),", msgdata["caption"])[1]
+      if config['trans']:
+          try:
+              msg_trans = await translate.txt_trans(msg,way=0)#翻译
+              msg = f"\nEnglish:\n{msg}\n中文:\n{msg_trans}"
+          except:
+              msg = f"\nEnglish:\n{msg}"
+      else:
+          msg = f"\nEnglish:\n{msg}"
+  except Exception as e:
+        msg = "观察失败"
+  return msg
+
+async def get_pic_strong_(b_io):
+    try:
+        url = f"{config['sd_api_ip']}/sdapi/v1/interrogate"
+        data = "data:image/jpeg;base64," + base64.b64encode(b_io.getvalue()).decode()
+        json_data = {
+          "image": data,
+          "model": "clip",
+        }
+        response = await aiorequests.post(url,json=json_data,headers = {"Content-Type": "application/json"})
+        msgdata = await response.json()#报错反馈,待完成
+        msg = re.search(r"(.*),", msgdata["caption"])[1]
+    except:
+        return "获取增强信息失败"
+    tags = r"{{highly detailed}},{{masterpiece}},{ultra-detailed},{illustration},{{best quality}}," + msg
+    tags,error_msg,tags_guolv = await process_tags(0,0,tags,0,0,0,0)
+    result_msg,error_msg = await get_imgdata_sd(tags,way=0,shape="Portrait",b_io=b_io,size = None)
+    if error_msg:
+        return result_msg
+    result_msg = f"\n{msg}\n{result_msg}"
+    return result_msg
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #way=0是txt2img,way=1是img2img
 async def get_imgdata_sd(tagdict:dict,way=1,shape="Portrait",b_io=None,size = None):

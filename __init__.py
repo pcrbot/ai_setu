@@ -62,7 +62,10 @@ async def text2img_sd(bot, ev):
     result_msg,error_msg = await until.get_imgdata_sd(tag_dict,way=0)
     if len(error_msg):
         await bot.finish(ev, f"已报错：{error_msg}", at_sender=True)
-    await bot.delete_msg(message_id=to_del['message_id'])#撤回反馈互动,防止刷屏
+    try:
+        await bot.delete_msg(message_id=to_del['message_id'])#撤回反馈互动,防止刷屏
+    except:
+        await bot.send(ev, f"请给bot管理员以解锁全部功能")
     #result_msg = f"[CQ:reply,id={ev.message_id}]{result_msg}"     #回复形式发送,喜欢就取消注释,并注释下一行
     await bot.send(ev, result_msg, at_sender=True)
 
@@ -87,7 +90,10 @@ async def img2img(bot, ev):
     result_msg,error_msg = await until.get_imgdata_sd(tag_dict,way=1,shape=shape,b_io=b_io,size=size) #绘图过程
     if len(error_msg):
         await bot.finish(ev, f"已报错：{error_msg}", at_sender=True)
-    await bot.delete_msg(message_id=to_del['message_id'])#撤回反馈互动,防止刷屏
+    try:
+        await bot.delete_msg(message_id=to_del['message_id'])#撤回反馈互动,防止刷屏
+    except:
+        await bot.send(ev, f"请给bot管理员以解锁全部功能")
     await bot.send(ev, result_msg, at_sender=True)
 
 
@@ -99,7 +105,27 @@ async def get_pic_msg(bot, ev):
     msg = await until.get_pic_msg_temp(ev.message)
     await bot.send(ev, msg, at_sender=True)
 
+@sv.on_keyword("观察pic")
+async def get_pic_descrip(bot, ev):
+    if ev.message[0].type == "reply":
+        tmsg = await bot.get_msg(message_id=int(ev.message[0].data['id']))
+        ev.message = tmsg["message"]
+    b_io,shape,error_msg,size = await until.get_pic_d(ev.message)  #图片获取过程
+    if len(error_msg):
+        await bot.finish(ev, f"已报错：{error_msg}", at_sender=True)
+    msg = await until.get_pic_descrip_(b_io)
+    await bot.send(ev, msg, at_sender=True)
 
+@sv.on_keyword("增强pic")
+async def get_pic_strong(bot,ev):
+    if ev.message[0].type == "reply":
+        tmsg = await bot.get_msg(message_id=int(ev.message[0].data['id']))
+        ev.message = tmsg["message"]
+    b_io,shape,error_msg,size = await until.get_pic_d(ev.message)  #图片获取过程
+    if len(error_msg):
+        await bot.finish(ev, f"已报错：{error_msg}", at_sender=True)
+    msg = await until.get_pic_strong_(b_io)
+    await bot.send(ev, msg, at_sender=True)
 
 
 

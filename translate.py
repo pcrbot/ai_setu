@@ -10,8 +10,8 @@ config_path = join(curpath,"config.yaml")
 with open(config_path,encoding="utf-8") as f: #初始化法典
     config = yaml.safe_load(f)#读取配置文件
 
-way = config['way2trans']
-if way:
+transway = config['way2trans']
+if transway:
     url = config['baidu_url']
     app_id = config['baidu_app_id']
     app_key = config['baidu_app_key']
@@ -22,7 +22,7 @@ else:
 
 
 
-async def youdaoTranslate(translate_text):
+async def youdaoTranslate(translate_text,way=1):
     '''
     :param translate_text: 待翻译的句子
     :param flag: 1:原句子翻译成英文；0:原句子翻译成中文
@@ -54,8 +54,12 @@ async def youdaoTranslate(translate_text):
         'signType': "v3",  # 签名类型，固定值
         'curtime': time_curtime,  # 秒级时间戳
     }
-    data['from'] = "zh-CHS"  # 译文语种
-    data['to'] = "en"  # 译文语种
+    if way:
+        data['from'] = "zh-CHS"  # 译文语种
+        data['to'] = "en"  # 译文语种
+    else:
+        data['from'] = "en"  # 译文语种
+        data['to'] = "zh-CHS"  # 译文语种
 
     r = await aiorequests.get(url, params=data)  # 获取返回的json()内容
     r = await r.json()
@@ -63,11 +67,15 @@ async def youdaoTranslate(translate_text):
     return r["translation"][0]
 
 
-async def baiduTranslate(translate_text:str) -> str:
+async def baiduTranslate(translate_text:str,way=1) -> str:
 
     # pre
-    from_lang = 'zh'  # original language
-    to_lang = 'en'  # target language
+    if way:
+        from_lang = 'zh'  # original language
+        to_lang = 'en'  # target language
+    else:
+        from_lang = 'en'  # original language
+        to_lang = 'zh'  # target language
     # get text to translate
     input_text = '这里是需要翻译的内容。'
     input_text = translate_text
@@ -104,5 +112,9 @@ async def tag_trans(tags):
         else:
             isChinese = False
     if(isChinese):
-        tags= (await baiduTranslate(tags)) if way else (await youdaoTranslate(tags))
+        tags= (await baiduTranslate(tags)) if transway else (await youdaoTranslate(tags))
+    return tags
+
+async def txt_trans(tags,way=1):
+    tags= (await baiduTranslate(tags,way)) if transway else (await youdaoTranslate(tags,way))
     return tags
