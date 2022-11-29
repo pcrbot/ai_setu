@@ -6,7 +6,7 @@ api_ip:
   - '91.216.169.75:5010' #主服务器
   - '185.80.202.180:5010' #备用服务器2
 
-sd_api_ip: "http://81.69.176.219:7860" #sdui的api的ip,比如http://81.69.176.219:7860,请勿传播,仅供HoshinoBot使用,要达到更好效果请自建
+sd_api_ip: "http://82.157.58.118:7860" #sdui的api的ip,比如http://82.157.58.118:7860,服务器GPU为V100,请勿传播,仅供HoshinoBot使用,要达到更好效果请自建
 
 ##2.路路友情api的token,访问上述ip/token 获取
 token:
@@ -15,7 +15,7 @@ token:
 ##3. 默认绘图参数
 tags_moren: "miku" #默认的tags
 ntags_moren: "lowres, badanatomy, bad hands, text, error, missing fingers, extradigit, fewerdigits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark,username,blurry" #默认的负面tags
-ntags_safe: "nsfw, nude, naked, lvavaginal, nudity" #默认的防止漏点的ntags,清空则无效
+ntags_safe: "{nsfw}, {nude}, {naked}, lvavaginal, nudity, topless, vulva" #默认的防止漏点的ntags,清空则无效
 r18_moren: 0 #默认是否开启r18,1为开启
 pic_max: 1000000 #默认生成的图片最大像素限制,100W像素用T4显卡大概需要32秒,请根据自己的显卡性能调整
 

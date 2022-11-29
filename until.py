@@ -149,14 +149,14 @@ async def process_tags(gid,uid,tags,add_db=config['add_db'],trans=config['trans'
                 tag_dict["tags="] = await translate.tag_trans(tag_dict["tags="])#翻译
         except Exception as e:
             error_msg += "翻译失败"
-            return tags,error_msg,tags_guolv
+
     #过滤tags,只过滤正面tags
     if limit_word:
         try:
             tag_dict["tags="],tags_guolv = await guolv(tag_dict["tags="].strip().lower())#过滤,转小写防止翻译出来大写
         except Exception as e:
             error_msg += "过滤失败"
-            return tags,error_msg,tags_guolv
+
     #整理tags
     if arrange_tags:
         try:
@@ -169,7 +169,7 @@ async def process_tags(gid,uid,tags,add_db=config['add_db'],trans=config['trans'
                 tag_dict[i] = ",".join(tidylist)
         except Exception as e:
             error_msg += f"整理失败{e}"
-            return tags,error_msg,tags_guolv
+
     #规范tags
     if not tag_dict["tags="]:
         tag_dict["tags="] = config['tags_moren']#默认正面tags
@@ -198,7 +198,6 @@ async def process_tags(gid,uid,tags,add_db=config['add_db'],trans=config['trans'
                 db.add_xp_num(gid,uid,tag)
         except Exception as e:
             error_msg += "上传失败"
-            return tags,error_msg,tags_guolv
     return tag_dict,error_msg,tags_guolv
 
 async def retry_get_ip_token(i):
