@@ -129,8 +129,9 @@ async def process_tags(gid,uid,tags,add_db=config['add_db'],trans=config['trans'
     tags_guolv="" #过滤词信息
     #初始化
     try:
-        tags = f"tags={tags.strip().lower()}" #去除首尾空格换行#转小写#头部加上tags= #转小写方便处理
+        tags = f"tags={tags.strip()}" #去除首尾空格换行#头部加上tags=
         taglist = re.split('&',tags) #分割
+        taglist[0] = taglist[0].strip().lower() #转小写方便处理
         id = ["tags=","ntags=","seed=","scale=","shape=","strength=","r18=","steps=","sampler=","restore_faces=","tiling=","bigger=","w=","h="]
         tag_dict = {i: ("" if not [idx for idx in taglist if idx.startswith(i)] else [idx for idx in taglist if idx.startswith(i)][-1]).replace(i, '', 1)  for i in id }#取出tags+ntags+seed+scale+shape,每种只取列表最后一个,并删掉id
     except Exception as e:
